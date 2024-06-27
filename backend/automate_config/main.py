@@ -48,7 +48,7 @@ async def configure_switch(host, port, commands, counters):
     writer = None
     try:
         print(f"Connecting to {host}:{port}...")
-        reader, writer = await telnetlib3.open_connection(host, port)
+        _, writer = await telnetlib3.open_connection(host, port)
         print(f"Connected to {host}:{port}")
 
         # Send each command to the switch
@@ -77,6 +77,7 @@ async def main():
     # Define server ip address
     SERVER_IP_ADDRESS = "192.168.150.129"
 
+    # Define counters for connection results
     counters = {"good_connections": 0, "bad_connections": 0}
 
     # Read credentials
