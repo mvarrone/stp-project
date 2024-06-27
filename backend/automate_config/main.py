@@ -27,13 +27,8 @@ wr
 exit
 """
 
-# Initialize counters
-good_connections = 0
-bad_connections = 0
 
-
-async def configure_switch(host, port, commands):
-    global good_connections, bad_connections
+async def configure_switch(host, port, commands, counters):
     writer = None
     try:
         print(f"Connecting to {host}:{port}...")
@@ -50,10 +45,10 @@ async def configure_switch(host, port, commands):
         # Close the telnet connection
         await writer.drain()
         print(f"Closed connection to {host}:{port}")
-        good_connections += 1
+        counters["good_connections"] += 1
     except Exception as e:
-        print(f"\nError configuring {host}:{port} - {e}")
-        bad_connections += 1
+        print(f"Error configuring {host}:{port} - {e}")
+        counters["bad_connections"] += 1
     finally:
         if writer is not None:
             writer.close()
@@ -64,9 +59,15 @@ async def main():
     CREDENTIALS_FILE = "./credentials.json"
     SERVER_IP_ADDRESS = "192.168.150.129"
 
+    counters = {"good_connections": 0, "bad_connections": 0}
+
     # Read parameters from the JSON file
-    with open(CREDENTIALS_FILE, "r") as file:
-        devices = json.load(file)
+    try:
+        with open(CREDENTIALS_FILE, "r") as file:
+            devices = json.load(file)
+    except FileNotFoundError:
+        print(f"Error: The file {CREDENTIALS_FILE} was not found")
+        return
 
     tasks = []
 
@@ -85,7 +86,9 @@ async def main():
         )
 
         # Configure the switch
-        tasks.append(configure_switch(SERVER_IP_ADDRESS, device.get("port"), commands))
+        tasks.append(
+            configure_switch(SERVER_IP_ADDRESS, device.get("port"), commands, counters)
+        )
         print(
             f"Started task for {device.get('hostname')} - SVI: {device.get('SVI_ip_address')}"
         )
@@ -94,6 +97,10 @@ async def main():
     await asyncio.gather(*tasks)
 
     total_devices = len(devices)
+
+    good_connections = counters.get("good_connections")
+    bad_connections = counters.get("bad_connections")
+
     good_connections_percentaje = round(100 * good_connections / total_devices, 2)
     bad_connections_percentaje = round(100 * bad_connections / total_devices, 2)
     print(
