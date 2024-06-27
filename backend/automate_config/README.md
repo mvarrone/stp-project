@@ -5,6 +5,7 @@
 - Python 3.12.2
 - telnetlib3 2.0.4
 - PNETLab 4.2.10
+- Switch image: [viosl2-15.2.4.55e](https://github.com/mvarrone/stp-project/tree/master/backend/tested_switch_images). Number 4 in the table
 
 ## Description
 
