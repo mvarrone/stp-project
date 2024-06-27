@@ -28,6 +28,22 @@ exit
 """
 
 
+def print_stats(devices, counters):
+    total_devices = len(devices)
+
+    good_connections = counters.get("good_connections")
+    bad_connections = counters.get("bad_connections")
+
+    good_connections_percentaje = round(100 * good_connections / total_devices, 2)
+    bad_connections_percentaje = round(100 * bad_connections / total_devices, 2)
+    print(
+        f"\nGood connections: {good_connections}/{total_devices} - {good_connections_percentaje} %"
+    )
+    print(
+        f"Bad connections: {bad_connections}/{total_devices} - {bad_connections_percentaje} %"
+    )
+
+
 async def configure_switch(host, port, commands, counters):
     writer = None
     try:
@@ -96,19 +112,7 @@ async def main():
     # Run all tasks concurrently
     await asyncio.gather(*tasks)
 
-    total_devices = len(devices)
-
-    good_connections = counters.get("good_connections")
-    bad_connections = counters.get("bad_connections")
-
-    good_connections_percentaje = round(100 * good_connections / total_devices, 2)
-    bad_connections_percentaje = round(100 * bad_connections / total_devices, 2)
-    print(
-        f"\nGood connections: {good_connections}/{total_devices} - {good_connections_percentaje} %"
-    )
-    print(
-        f"Bad connections: {bad_connections}/{total_devices} - {bad_connections_percentaje} %"
-    )
+    print_stats(devices, counters)
 
 
 if __name__ == "__main__":
