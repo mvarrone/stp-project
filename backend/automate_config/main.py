@@ -73,6 +73,8 @@ async def configure_switch(host, port, commands, counters):
 async def main():
     # Define the JSON file with credentials
     CREDENTIALS_FILE = "./credentials.json"
+
+    # Define server ip address
     SERVER_IP_ADDRESS = "192.168.150.129"
 
     counters = {"good_connections": 0, "bad_connections": 0}
@@ -84,8 +86,6 @@ async def main():
     except FileNotFoundError:
         print(f"Error: The file {CREDENTIALS_FILE} was not found")
         return
-
-    tasks = []
 
     # Iterate over each device in the list
     for device in devices:
@@ -101,10 +101,13 @@ async def main():
             domain_name=device.get("domain_name"),
         )
 
+        tasks = []
+
         # Configure the switch
         tasks.append(
             configure_switch(SERVER_IP_ADDRESS, device.get("port"), commands, counters)
         )
+
         print(
             f"Started task for {device.get('hostname')} - SVI: {device.get('SVI_ip_address')}"
         )
