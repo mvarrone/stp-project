@@ -21,4 +21,4 @@ So, the purpose of this script is to be used mainly in a lab environment where d
 
 - [test1.txt](https://github.com/mvarrone/stp-project/blob/master/backend/automate_config/tests/test1.txt) Tested on 5 devices resulting in a execution time of approximately 2 seconds.
 
-- [test2.txt](https://github.com/mvarrone/stp-project/blob/master/backend/automate_config/tests/test2.txt) Tested on 6 devices resulting in a execution time of approximately 2 seconds as well: In this case, we created a new dictionary in *credentials.json* file containing data for a new switch that was not created in the lab, so trying to access to if will fail
+- [test2.txt](https://github.com/mvarrone/stp-project/blob/master/backend/automate_config/tests/test2.txt) Tested on 6 devices resulting in a execution time of approximately 2 seconds as well: In this case, we created a new dictionary in *credentials.json* file containing data for a new switch that was not created in the lab, so trying to access to it will fail
