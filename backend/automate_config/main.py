@@ -28,7 +28,15 @@ exit
 """
 
 
-def print_stats(devices, counters):
+def print_execution_time(end_total) -> None:
+    if end_total > 1:
+        print(f"Total script execution time: {end_total:.2f} s")
+    else:
+        end_total *= 1000
+        print(f"Total script execution time: {end_total:.2f} ms")
+
+
+def print_stats(devices, counters) -> None:
     total_devices = len(devices)
 
     good_connections = counters.get("good_connections")
@@ -88,6 +96,8 @@ async def main():
         print(f"Error: The file {CREDENTIALS_FILE} was not found")
         return
 
+    tasks = []
+
     # Iterate over each device in the list
     for device in devices:
         # Create the command string from the template and parameters
@@ -102,12 +112,9 @@ async def main():
             domain_name=device.get("domain_name"),
         )
 
-        tasks = []
-
         # Configure the switch
-        tasks.append(
-            configure_switch(SERVER_IP_ADDRESS, device.get("port"), commands, counters)
-        )
+        port = device.get("port")
+        tasks.append(configure_switch(SERVER_IP_ADDRESS, port, commands, counters))
 
         print(
             f"Started task for {device.get('hostname')} - SVI: {device.get('SVI_ip_address')}"
@@ -124,8 +131,4 @@ if __name__ == "__main__":
     asyncio.run(main())
     end_total = time.time() - start_total
 
-    if end_total > 1:
-        print(f"Total script execution time: {end_total:.2f} s")
-    else:
-        end_total *= 1000
-        print(f"Total script execution time: {end_total:.2f} ms")
+    print_execution_time(end_total)
