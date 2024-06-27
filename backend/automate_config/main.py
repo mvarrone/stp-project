@@ -77,7 +77,7 @@ async def main():
 
     counters = {"good_connections": 0, "bad_connections": 0}
 
-    # Read parameters from the JSON file
+    # Read credentials
     try:
         with open(CREDENTIALS_FILE, "r") as file:
             devices = json.load(file)
