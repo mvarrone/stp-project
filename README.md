@@ -1,6 +1,5 @@
 ## Spanning tree protocol (STP)
 
-
 ## Pre-configuration process
 
 I have created an automated process to configure multiple network switches using a Python 3 script. 
