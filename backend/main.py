@@ -12,8 +12,9 @@ from netmiko import (
 )
 from netmiko.utilities import get_structured_data
 
-# The connection_id is used as a counter for each device connection and is later used in the nodes variable.
-connection_id = 0
+CREDENTIALS_FILE: str = "./device_credentials.json"
+SENTINEL_VALUE_FOR_LEVEL = 9999
+connection_id = 0 # The connection_id is used as a counter for each device connection and is later used in the nodes variable.
 
 def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
     list_of_nodes = []
@@ -52,48 +53,55 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
 
     print("\nlist_of_nodes:\n", list_of_nodes)
 
+    print("\nfunction")
     # Level > 1: Remaining nodes
-    max_level = max(item.get("level") for item in list_of_nodes)
-    #print("\nmax_level:\n", max_level)
+    def nodes_level_higher_than_1(list_of_nodes):
+        max_level = max(item.get("level") for item in list_of_nodes)
+        #print("\nmax_level:\n", max_level)
 
-    nodes_to_analize = [
-        item for item in list_of_nodes if item.get("level") == max_level
-    ]
-    #print(f"\nnodes_to_analize because we are in level {max_level}:\n")
-    #print(nodes_to_analize)
+        nodes_to_analize = [
+            item for item in list_of_nodes if item.get("level") == max_level
+        ]
+        #print(f"\nnodes_to_analize because we are in level {max_level}:\n")
+        #print(nodes_to_analize)
 
-    neighbors_data = []
-    for node in nodes_to_analize:
-        node_name = node.get("label")
-        #print("\nnode name to analize:", node_name)
-        for result in results:
-            if result.get("label") == node_name:
-                neighbors = result.get("cdp_output_parsed")
-                #print(neighbors)
-                for neighbor in neighbors:
-                    neighbor_name = neighbor.get("neighbor").split(".")[0]
-                    #print("--", neighbor_name)
-                    neighbors_data.append(neighbor_name)
+        neighbors_data = []
+        for node in nodes_to_analize:
+            node_name = node.get("label")
+            #print("\nnode name to analize:", node_name)
+            for result in results:
+                if result.get("label") == node_name:
+                    neighbors = result.get("cdp_output_parsed")
+                    #print(neighbors)
+                    for neighbor in neighbors:
+                        neighbor_name = neighbor.get("neighbor").split(".")[0]
+                        #print("--", neighbor_name)
+                        neighbors_data.append(neighbor_name)
+        
+        for neighbor in neighbors_data:
+            #print(neighbor)
+            for result in results:
+                if result.get("label") == neighbor:
+                    level_found = result.get("level")
+                    #print("level_found:", level_found, "\n")
+                    if level_found == SENTINEL_VALUE_FOR_LEVEL:
+                        updated_level = max_level + 1
+                        result["level"] = updated_level
+                        #print(f"{neighbor}: Level changed from {level_found} to {updated_level}")
+                        node = {
+                            "id": result.get("id"),
+                            "label": result.get("label"),
+                            "level": updated_level,
+                            "title": result.get("title")
+                        }
+                        list_of_nodes.append(node)
+        #print(results)
+        print("\nlist_of_nodes:\n", list_of_nodes)
+        return list_of_nodes
     
-    for neighbor in neighbors_data:
-        #print(neighbor)
-        for result in results:
-            if result.get("label") == neighbor:
-                level_found = result.get("level")
-                #print("level_found:", level_found, "\n")
-                if level_found == 9999:
-                    new_level = max_level + 1
-                    result["level"] = new_level
-                    #print(f"{neighbor}: Level changed from {level_found} to {new_level}")
-                    node = {
-                        "id": result.get("id"),
-                        "label": result.get("label"),
-                        "level": new_level,
-                        "title": result.get("title")
-                    }
-                    list_of_nodes.append(node)
-    #print(results)
-    print("\nlist_of_nodes:\n", list_of_nodes)
+    list_of_nodes = nodes_level_higher_than_1(list_of_nodes)
+    list_of_nodes = nodes_level_higher_than_1(list_of_nodes)
+    return list_of_nodes
 
                             
 def find_root_bridge(results: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -232,10 +240,10 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             # Assign a title to each device for being used in nodes later
             result["title"] = f"{device.get("host")} - {device.get("device_type")}"
             
-            # Assign a level of 9999 to each device for being used in nodes later
-            # Sentinel value for level. It indicates that level has not yet been determined
+            # Assign a SENTINEL_VALUE_FOR_LEVEL to each device for being used in nodes later
+            # SENTINEL_VALUE_FOR_LEVEL: It indicates that the key level has not yet been determined
             # It will be updated in the process_nodes function later
-            result["level"] = 9999
+            result["level"] = SENTINEL_VALUE_FOR_LEVEL
 
             # Increase ID
             connection_id += 1
@@ -252,8 +260,6 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
 def main() -> None:
     # 1. Load credentials
     print("\n1. Load credentials")
-    CREDENTIALS_FILE: str = "./device_credentials.json"
-
     devices: List[Dict[str, Any]] = load_credentials(CREDENTIALS_FILE)
     if not devices:
         return
@@ -316,7 +322,8 @@ def main() -> None:
 
     # 6. Build nodes
     print("\n6. Build nodes")
-    process_nodes(root_bridge_data, results)
+    nodes = process_nodes(root_bridge_data, results)
+    #print(nodes)
 
 if __name__ == "__main__":
     start_total: float = time.time()
