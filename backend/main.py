@@ -1,5 +1,4 @@
 import json
-import sys
 import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -13,13 +12,100 @@ from netmiko import (
 )
 from netmiko.utilities import get_structured_data
 
+# The connection_id is used as a counter for each device connection and is later used in the nodes variable.
+connection_id = 0
 
+def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
+    list_of_nodes = []
+
+    # Level 0: Node for Root Bridge
+    root_bridge_node = {
+        "id": root_bridge_data.get("id"),
+        "label": root_bridge_data.get("label"),
+        "level": root_bridge_data.get("level"),
+        "title": root_bridge_data.get("title")
+    }
+    list_of_nodes.append(root_bridge_node)
+
+    print("\nlist_of_nodes:\n", list_of_nodes)
+
+    # Once the root bridge node has been added, let's continue adding the remaining nodes
+    # Level 1: Nodes for Root Bridge neighbors
+    root_bridge_neighbor_list = []
+    root_bridge_neighbors = root_bridge_data.get("neighbors")
+    for neighbor in root_bridge_neighbors:
+        neighbor_name = neighbor.get("neighbor").split(".")[0]
+        root_bridge_neighbor_list.append(neighbor_name)
+    print("\nroot_bridge_neighbor_list:\n", root_bridge_neighbor_list)
+    
+    for root_bridge_neighbor in root_bridge_neighbor_list:
+        for result in results:
+            if root_bridge_neighbor == result.get("prompt"):
+                node = {
+                    "id": result.get("id"),
+                    "label": result.get("label"),
+                    "level": 1, # 1 because this node is a root bridge neighbor
+                    "title": result.get("title")
+                }
+                list_of_nodes.append(node)
+                result["level"] = 1
+
+    print("\nlist_of_nodes:\n", list_of_nodes)
+
+    # Level > 1: Remaining nodes
+    max_level = max(item.get("level") for item in list_of_nodes)
+    #print("\nmax_level:\n", max_level)
+
+    nodes_to_analize = [
+        item for item in list_of_nodes if item.get("level") == max_level
+    ]
+    #print(f"\nnodes_to_analize because we are in level {max_level}:\n")
+    #print(nodes_to_analize)
+
+    neighbors_data = []
+    for node in nodes_to_analize:
+        node_name = node.get("label")
+        #print("\nnode name to analize:", node_name)
+        for result in results:
+            if result.get("label") == node_name:
+                neighbors = result.get("cdp_output_parsed")
+                #print(neighbors)
+                for neighbor in neighbors:
+                    neighbor_name = neighbor.get("neighbor").split(".")[0]
+                    #print("--", neighbor_name)
+                    neighbors_data.append(neighbor_name)
+    
+    for neighbor in neighbors_data:
+        #print(neighbor)
+        for result in results:
+            if result.get("label") == neighbor:
+                level_found = result.get("level")
+                #print("level_found:", level_found, "\n")
+                if level_found == 9999:
+                    new_level = max_level + 1
+                    result["level"] = new_level
+                    #print(f"{neighbor}: Level changed from {level_found} to {new_level}")
+                    node = {
+                        "id": result.get("id"),
+                        "label": result.get("label"),
+                        "level": new_level,
+                        "title": result.get("title")
+                    }
+                    list_of_nodes.append(node)
+    #print(results)
+    print("\nlist_of_nodes:\n", list_of_nodes)
+
+                            
 def find_root_bridge(results: List[Dict[str, Any]]) -> Dict[str, Any]:
     root_bridge_data: Dict[str, Any] = {
         "device": "",
-        "port": "",
         "device_type": "",
         "prompt": "",
+        "level": "",
+        "id": "",
+        "label": "",
+        "title": "",
+        "neighbors": ""
     }
 
     CISCO_STP_RAW_OUTPUT_ROOT_BRIDGE_TEXT = "This bridge is the root"
@@ -28,9 +114,14 @@ def find_root_bridge(results: List[Dict[str, Any]]) -> Dict[str, Any]:
         if result.get("device_type") == "cisco_ios":
             if CISCO_STP_RAW_OUTPUT_ROOT_BRIDGE_TEXT in result.get("stp_output_raw"):
                 root_bridge_data["device"] = result.get("device")
-                root_bridge_data["port"] = result.get("port")
                 root_bridge_data["device_type"] = result.get("device_type")
                 root_bridge_data["prompt"] = result.get("prompt")
+                root_bridge_data["level"] = 0 # 0 because this node is the root bridge and that is why it has level 0
+                root_bridge_data["id"] = result.get("id")
+                root_bridge_data["label"] = result.get("label")
+                root_bridge_data["title"] = result.get("title")
+                root_bridge_data["neighbors"] = result.get("cdp_output_parsed")
+                result["level"] = 0
                 return root_bridge_data
 
     root_bridge_data = {}
@@ -84,7 +175,13 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
         "stp_output_parsed": "",
         "cdp_output_raw": "",
         "cdp_output_parsed": "",
+        "id": "",
+        "label": "",
+        "title": "",
+        "level": "",
     }
+
+    global connection_id
 
     spanning_tree_command = device.get("spanning_tree_command", "show spanning-tree")
     cdp_neighbors_command = device.get("cdp_neighbors_command", "show cdp neighbors")
@@ -109,7 +206,7 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             )
             # Parse STP data locally
             result["stp_output_parsed"] = get_structured_data(
-                result["stp_output_raw"],
+                raw_output=result.get("stp_output_raw"),
                 platform=connection.device_type,
                 command=spanning_tree_command,
             )
@@ -120,10 +217,28 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             )
             # Parse CDP data locally
             result["cdp_output_parsed"] = get_structured_data(
-                result["cdp_output_raw"],
+                raw_output=result.get("cdp_output_raw"),
                 platform=connection.device_type,
                 command=cdp_neighbors_command,
             )
+
+            # Assign ID to each device for being used in nodes later
+            result["id"] = connection_id
+
+            # Assign a label to each device for being used in nodes later
+            # label is the exact info as prompt
+            result["label"] = result.get("prompt")
+
+            # Assign a title to each device for being used in nodes later
+            result["title"] = f"{device.get("host")} - {device.get("device_type")}"
+            
+            # Assign a level of 9999 to each device for being used in nodes later
+            # Sentinel value for level. It indicates that level has not yet been determined
+            # It will be updated in the process_nodes function later
+            result["level"] = 9999
+
+            # Increase ID
+            connection_id += 1
 
     except NetMikoAuthenticationException:
         result["status"] = "authentication_failure"
@@ -136,15 +251,21 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
 
 def main() -> None:
     # 1. Load credentials
+    print("\n1. Load credentials")
     CREDENTIALS_FILE: str = "./device_credentials.json"
 
     devices: List[Dict[str, Any]] = load_credentials(CREDENTIALS_FILE)
     if not devices:
-        sys.exit(1)
+        return
+
     total_devices: int = len(devices)
-    print(f"{total_devices} devices found in {CREDENTIALS_FILE} file")
+    if total_devices == 1:
+        print(f"1 device found in {CREDENTIALS_FILE} file")
+    else:
+        print(f"{total_devices} devices found in {CREDENTIALS_FILE} file")
 
     # 2. Connect to devices concurrently
+    print("\n2. Connect to devices concurrently")
     results: List[Dict[str, Any]] = []
     with ThreadPoolExecutor(max_workers=total_devices) as executor:
         future_to_device = {
@@ -154,39 +275,48 @@ def main() -> None:
             results.append(future.result())
 
     print("\nDEBUG:")
+
     for result in results:
-        pprint(result)
+        pprint(result) 
 
     # 3. Count successes and failures
+    print("\n3. Count successes and failures")
     connection_counter: Counter = Counter()
     for result in results:
         connection_counter[result.get("status", "unknown")] += 1
+    print("Done")
 
     # 4. Print results
-    print("\nSummary of connections:")
+    print("\n4. Print results\n\nSummary of connections:")
     total_devices = len(devices)
     successful_connections = connection_counter.get("success", 0)
-    print(f"  Successful connections: {successful_connections}/{total_devices}")
+    successful_connections_percentaje = 100 * successful_connections / total_devices
+    print(f"--Successful connections: {successful_connections}/{total_devices} ({successful_connections_percentaje} %)")
     failed_connections = total_devices - successful_connections
-    print(f"  Failed connections: {failed_connections}/{total_devices}")
+    failed_connections_percentaje = 100 * failed_connections / total_devices
+    print(f"--Failed connections: {failed_connections}/{total_devices} ({failed_connections_percentaje} %)")
 
     # Define all possible statuses for failed connections
     all_statuses = {"authentication_failure", "timeout", "other_failure"}
     for status in sorted(all_statuses):
         count = connection_counter.get(status, 0)
-        print(f"    {status}: {count}/{total_devices}")
+        print(f"----{status}: {count}/{total_devices}")
 
     if not successful_connections:
         print("\nNo successful connections were made. Ending here")
         return
 
     # 5. Find root bridge
+    print("\n5. Find root bridge")
     root_bridge_data = find_root_bridge(results)
     if not root_bridge_data:
         print("\nNo root bridge found. Ending here")
         return
-    print(f"\n5. Root bridge has been found:\n{root_bridge_data}")
+    print(f"\nRoot bridge has been found:\n{root_bridge_data}")
 
+    # 6. Build nodes
+    print("\n6. Build nodes")
+    process_nodes(root_bridge_data, results)
 
 if __name__ == "__main__":
     start_total: float = time.time()
