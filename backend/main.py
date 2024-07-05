@@ -38,13 +38,13 @@ def print_edge_information(edges, edges_with_names, switches, edges_without_dupl
     for edge_wo in edges_without_duplicated:
         print(edge_wo)
 
-def process_edges(results) -> List[Dict[str, Any]]:
-    edges = []
-    edges_with_names = []
-    switches = []
+def process_edges(results):
+    edges: List[Dict[str, int]] = []
+    edges_with_names: List[Dict[str, str]] = []
+    switches: List[Dict[str, Any]] = []
+    edges_without_duplicated: List[Dict[str, int]] = []
 
     seen_edges = set()
-    edges_without_duplicated = []
 
     # Extracting edges from results
     for result in results:
@@ -461,7 +461,22 @@ def main() -> None:
     # DONE: b) Focus on deleting duplicated links: edges_without_duplicated variable
 
     # To-Do
-    # c) Focus on deleting links with Role=Altn in a interface
+    # c) Standardize stp and cdp interface names
+
+    # d) Focus on deleting links with Role=Altn in a interface
+    # Posible solucion:
+    # Checkear dentro de stp_output_parsed if stp_output_parsed.Role==Altn
+    # Si lo encuentra, obtener stp_output_parsed.interface y result.prompt
+    # Comprobar en result.cdp_output_parsed cuales son sus vecinos.
+    # Dentro de ahi, checkear si cdp_output_parsed.local_interface es igual a
+    # stp_output_parsed.interface. Caso afirmativo: obtenemos cdp_output_parsed.neighbor
+    # Asi, ya tenemos ambos switches en cuestion.
+    # Falta identificar que id lleva cada switch
+    # Tendriamos algo como from: 0 to:1, convertirlo a from:1 to:0
+    # Finalmente, buscar en edges_without_duplicated si se encuentra alguna de esas 2 combinaciones
+    # Caso afirmativo: Borrarla de edges_without_duplicated
+    # Guardar como edges_without_duplicated_and_wo_blocked
+    
 
 if __name__ == "__main__":
     start_total: float = time.time()
