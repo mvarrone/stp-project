@@ -17,6 +17,26 @@ CREDENTIALS_FILE: str = "./device_credentials.json"
 SENTINEL_VALUE_FOR_LEVEL: int = 9999
 connection_id: int = 0
 
+def print_edge_information(edges, edges_with_names, switches, edges_without_duplicated) -> None:
+    #print(switches)
+    print("\nBetter way to show switches:")
+    for switch in switches:
+        print(switch)
+
+    #print(edges)
+    print("\nBetter way to show edges:")
+    for edge in edges:
+        print(edge)
+        
+    #print(edges_with_names)
+    print("\nBetter way to show edges_with_names:")
+    for edges_with_name in edges_with_names:
+        print(edges_with_name)
+
+    #print(edges_without_duplicated)
+    print("\nBetter way to show edges_without_duplicated:")
+    for edge_wo in edges_without_duplicated:
+        print(edge_wo)
 
 def process_edges(results) -> List[Dict[str, Any]]:
     edges = []
@@ -60,6 +80,11 @@ def process_edges(results) -> List[Dict[str, Any]]:
 
     return edges, edges_with_names, switches, edges_without_duplicated
 
+def print_node_information(nodes) -> None:
+    #print(nodes)
+    print("\nBetter way to show nodes:")
+    for node in nodes:
+        print(node)
 
 def print_node_structure(nodes) -> None:
     # Sort nodes by key 'level'
@@ -414,38 +439,28 @@ def main() -> None:
     # 6. Build nodes
     print("\n6. Build nodes")
     nodes = process_nodes(root_bridge_data, results)
-    print(nodes)
-    print("\nBetter way to show nodes:")
-    for node in nodes:
-        print(node)
 
-    # 7. Print node tree structure
-    print("\n7. Print node tree structure")
+    # 7. Print node information
+    print("\n7. Print node information")
+    print_node_information(nodes)
+
+    # 8. Print node tree structure
+    print("\n8. Print node tree structure")
     print_node_structure(nodes)
 
-    # 8. Build edges
-    print("\n8. Build edges")
+    # 9. Build edges
+    print("\n9. Build edges")
     edges, edges_with_names, switches, edges_without_duplicated = process_edges(results)
-    #print(switches)
-    print("\nBetter way to show switches:")
-    for switch in switches:
-        print(switch)
+    print("Done")
 
-    #print(edges)
-    print("\nBetter way to show edges:")
-    for edge in edges:
-        print(edge)
-        
-    #print(edges_with_names)
-    print("\nBetter way to show edges_with_names:")
-    for edges_with_name in edges_with_names:
-        print(edges_with_name)
+    # 10. Print edge information
+    print("\n10. Print edge information")
+    print_edge_information(edges, edges_with_names, switches, edges_without_duplicated)
 
-    #print(edges_without_duplicated)
-    print("\nBetter way to show edges_without_duplicated:")
-    for edge_wo in edges_without_duplicated:
-        print(edge_wo)
-
+# To-Do
+# a) Obtain full topology data: edge
+# b) Focus on deleting duplicated links: edges_without_duplicated
+# c) Focus on deleting links with Role=Altn in a interface
 
 if __name__ == "__main__":
     start_total: float = time.time()
