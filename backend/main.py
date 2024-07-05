@@ -15,7 +15,7 @@ from netmiko.utilities import get_structured_data
 # Variables
 CREDENTIALS_FILE: str = "./device_credentials.json"
 SENTINEL_VALUE_FOR_LEVEL: int = 9999
-connection_id: int = 0 # The connection_id is used as a counter for each device connection and is later used in the nodes variable.
+connection_id: int = 0
 
 def print_node_structure(nodes):
     # Sort the data by 'level'
@@ -23,59 +23,77 @@ def print_node_structure(nodes):
 
     # Print the network tree structure
     print("\nNetwork Tree Structure:")
+    print(23 * '-')
+    # Option 1
     for item in sorted_data:
-        indent = '  ' * item.get("level")
+        indent = 2 * '-' * item.get("level")
         print(f"{indent}{item.get("label")} - {item.get("title")}, Level: {item.get("level")}")
+
+    print("\nNetwork Tree Structure:")
+    print(23 * '-')
+    # Option 2
+    for item in sorted_data:
+        indent = 2 * ' ' * item.get("level")
+        print(f"({item.get("level")}) | {indent}{item.get("label")} - {item.get("title")}")
 
 
 def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
-    list_of_nodes = []
 
     # Level 0: Node for Root Bridge
-    root_bridge_node = {
-        "id": root_bridge_data.get("id"),
-        "label": root_bridge_data.get("label"),
-        "level": root_bridge_data.get("level"),
-        "title": root_bridge_data.get("title")
-    }
-    list_of_nodes.append(root_bridge_node)
+    def calculate_node_for_level_0(root_bridge_data):
+        list_of_nodes = []
+        node = {
+            "id": root_bridge_data.get("id"),
+            "label": root_bridge_data.get("label"),
+            "level": root_bridge_data.get("level"),
+            "title": root_bridge_data.get("title")
+        }
+        list_of_nodes.append(node)
 
-    print("\nlist_of_nodes:\n", list_of_nodes)
+        return list_of_nodes
+    
+    list_of_nodes = calculate_node_for_level_0(root_bridge_data)
+    print("\nLevel 0 - list_of_nodes:\n", list_of_nodes)
 
     # Once the root bridge node has been added, let's continue adding the remaining nodes
     # Level 1: Nodes for Root Bridge neighbors
-    root_bridge_neighbor_list = []
-    root_bridge_neighbors = root_bridge_data.get("neighbors")
-    for neighbor in root_bridge_neighbors:
-        neighbor_name = neighbor.get("neighbor").split(".")[0]
-        root_bridge_neighbor_list.append(neighbor_name)
-    print("\nroot_bridge_neighbor_list:\n", root_bridge_neighbor_list)
-    
-    for root_bridge_neighbor in root_bridge_neighbor_list:
-        for result in results:
-            if root_bridge_neighbor == result.get("prompt"):
-                node = {
-                    "id": result.get("id"),
-                    "label": result.get("label"),
-                    "level": 1, # 1 because this node is a root bridge neighbor
-                    "title": result.get("title")
-                }
-                list_of_nodes.append(node)
-                result["level"] = 1
+    def calculate_node_for_level_1(list_of_nodes, root_bridge_data, results):
+        root_bridge_neighbor_list = []
+        root_bridge_neighbors = root_bridge_data.get("neighbors")
 
-    print("\nlist_of_nodes:\n", list_of_nodes)
+        for neighbor in root_bridge_neighbors:
+            neighbor_name = neighbor.get("neighbor").split(".")[0]
+            root_bridge_neighbor_list.append(neighbor_name)
+        print("\nroot_bridge_neighbor_list:\n", root_bridge_neighbor_list)
+        
+        for root_bridge_neighbor in root_bridge_neighbor_list:
+            for result in results:
+                if root_bridge_neighbor == result.get("prompt"):
+                    node = {
+                        "id": result.get("id"),
+                        "label": result.get("label"),
+                        "level": 1, # 1 because this node is a root bridge neighbor
+                        "title": result.get("title")
+                    }
+                    list_of_nodes.append(node)
+                    result["level"] = 1
 
-    print("\nfunction")
+        return list_of_nodes
+
+    list_of_nodes = calculate_node_for_level_1(list_of_nodes, root_bridge_data, results)
+    print("\nLevel 1 - list_of_nodes:\n", list_of_nodes)
+
     # Level > 1: Remaining nodes
-    def nodes_level_higher_than_1(list_of_nodes):
-        max_level = max(item.get("level") for item in list_of_nodes)
-        #print("\nmax_level:\n", max_level)
+    print("\nFunction nodes_with_level_higher_than_1()")
+    def nodes_with_level_higher_than_1(list_of_nodes):
+        current_level = max(item.get("level") for item in list_of_nodes)
+        #print("\ncurrent_level:\n", current_level)
 
         nodes_to_analize = [
-            item for item in list_of_nodes if item.get("level") == max_level
+            item for item in list_of_nodes if item.get("level") == current_level
         ]
-        #print(f"\nnodes_to_analize because we are in level {max_level}:\n")
-        #print(nodes_to_analize)
+        print(f"\nnodes_to_analize because we are in level {current_level}:\n")
+        print(nodes_to_analize)
 
         neighbors_data = []
         for node in nodes_to_analize:
@@ -97,7 +115,7 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
                     level_found = result.get("level")
                     #print("level_found:", level_found, "\n")
                     if level_found == SENTINEL_VALUE_FOR_LEVEL:
-                        updated_level = max_level + 1
+                        updated_level = current_level + 1
                         result["level"] = updated_level
                         #print(f"{neighbor}: Level changed from {level_found} to {updated_level}")
                         node = {
@@ -109,10 +127,13 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
                         list_of_nodes.append(node)
         #print(results)
         print("\nlist_of_nodes:\n", list_of_nodes)
+
         return list_of_nodes
     
-    list_of_nodes = nodes_level_higher_than_1(list_of_nodes)
-    list_of_nodes = nodes_level_higher_than_1(list_of_nodes)
+    for i in range(1, 10):
+        print(f"\nIteration {i = }")
+        list_of_nodes = nodes_with_level_higher_than_1(list_of_nodes)
+
     return list_of_nodes
 
                             
@@ -201,7 +222,7 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
         "level": "",
     }
 
-    global connection_id
+    global connection_id # The connection_id variable is used as a counter for each device connection and is later used in the nodes variable.
 
     spanning_tree_command = device.get("spanning_tree_command", "show spanning-tree")
     cdp_neighbors_command = device.get("cdp_neighbors_command", "show cdp neighbors")
