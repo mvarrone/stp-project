@@ -312,7 +312,7 @@ def main() -> None:
         for future in as_completed(future_to_device):
             results.append(future.result())
 
-    print("\nDEBUG:")
+    print("DEBUG:")
     for result in results:
         pprint(result) 
 
