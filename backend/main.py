@@ -90,8 +90,8 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
             node for node in nodes if node.get("level") == current_level
         ]
 
-        print(f"\nnodes to analize because we are in level {current_level}:\n")
-        print("\nnodes to analize:", nodes_to_analize)
+        print(f"\nnodes to analize because we are in level {current_level}")
+        print("nodes to analize:", nodes_to_analize)
 
         neighbors_data = []
         for node in nodes_to_analize:
@@ -354,6 +354,9 @@ def main() -> None:
     print("\n6. Build nodes")
     nodes = process_nodes(root_bridge_data, results)
     #print(nodes)
+    print("\nBetter way to show nodes:")
+    for node in nodes:
+        print(node)
 
     # 7. Print node tree structure
     print("\n7. Print node tree structure")

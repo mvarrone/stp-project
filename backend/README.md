@@ -83,6 +83,7 @@ This README should help anyone understand the purpose, configuration, and usage 
 Folder containing output files for executions of *./backend/main.py* file 
 
 ### PowerShell
+
 ```python
 py .\main.py > ".\output\output_$(Get-Date -Format 'ddMMMyyyy_HHmmss').txt"
 ```
