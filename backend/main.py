@@ -17,6 +17,12 @@ CREDENTIALS_FILE: str = "./device_credentials.json"
 SENTINEL_VALUE_FOR_LEVEL: int = 9999
 connection_id: int = 0
 
+def process_edges(root_bridge_data, results) -> List[Dict[str, int]]:
+    edges = []
+
+    print(edges)
+    return edges
+
 def print_node_structure(nodes) -> None:
     # Sort nodes by key 'level'
     sorted_nodes = sorted(nodes, key = lambda x: x.get("level"))
@@ -60,7 +66,8 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
         root_bridge_neighbors = root_bridge_data.get("neighbors")
 
         for neighbor in root_bridge_neighbors:
-            neighbor_name = neighbor.get("neighbor").split(".")[0]
+            #neighbor_name = neighbor.get("neighbor").split(".")[0]
+            neighbor_name = neighbor.get("neighbor")
             root_bridge_neighbor_list.append(neighbor_name)
         print("\nroot_bridge_neighbor_list:\n", root_bridge_neighbor_list)
         
@@ -102,7 +109,8 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
                     neighbors = result.get("cdp_output_parsed")
                     #print("\nneighbors:", neighbors)
                     for neighbor in neighbors:
-                        neighbor_name = neighbor.get("neighbor").split(".")[0]
+                        #neighbor_name = neighbor.get("neighbor").split(".")[0]
+                        neighbor_name = neighbor.get("neighbor")
                         #print("--", neighbor_name)
                         neighbors_data.append(neighbor_name)
         
@@ -256,11 +264,26 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             )
 
             # Parse CDP data locally
-            result["cdp_output_parsed"] = get_structured_data(
+            parsed_cdp_output =  get_structured_data(
                 raw_output=result.get("cdp_output_raw"),
                 platform=connection.device_type,
                 command=cdp_neighbors_command,
             )
+
+            # Post parse processing for CDP
+            def modify_neighbors(parsed_cdp_output):
+                for entry in parsed_cdp_output:
+                    if 'neighbor' in entry:
+                        entry['neighbor'] = entry['neighbor'].split('.')[0]
+                    if 'capability' in entry:
+                        entry['capability'] = entry['capability'].strip()
+                return parsed_cdp_output
+
+            # Modify the neighbor names
+            parsed_cdp_output = modify_neighbors(parsed_cdp_output)
+
+            # Assign post processed data to dictionary
+            result["cdp_output_parsed"] = parsed_cdp_output
 
             # Assign ID to each device for being used in nodes later
             result["id"] = connection_id
@@ -361,6 +384,11 @@ def main() -> None:
     # 7. Print node tree structure
     print("\n7. Print node tree structure")
     print_node_structure(nodes)
+
+    # 8. Build edges
+    print("\n8. Build edges")
+    edges = process_edges(root_bridge_data, results)
+
 
 if __name__ == "__main__":
     start_total: float = time.time()

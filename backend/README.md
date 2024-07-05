@@ -87,3 +87,8 @@ Folder containing output files for executions of *./backend/main.py* file
 ```python
 py .\main.py > ".\output\output_$(Get-Date -Format 'ddMMMyyyy_HHmmss').txt"
 ```
+
+### NTC Templates folder
+
+D:\Program Files\Python312\Lib\site-packages\ntc_templates\templates
+D:\Program Files\Python312\Lib\site-packages\ntc_templates\templates\index

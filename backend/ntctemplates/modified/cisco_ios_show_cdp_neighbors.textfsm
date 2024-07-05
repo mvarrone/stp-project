@@ -1,0 +1,20 @@
+Value Required NEIGHBOR (\S+)
+Value LOCAL_INTERFACE (Gig\s+\S+)
+Value HOLDTIME (\d+)
+Value CAPABILITY ([RTBSHIPDCM\s]+)
+Value PLATFORM (\S*)
+Value NEIGHBOR_INTERFACE (Gig\s+\S+)
+
+Start
+  ^Device.*ID -> CDP
+  # Capture time-stamp if vty line has command time-stamping turned on
+  ^Load\s+for\s+
+  ^Time\s+source\s+is
+
+CDP
+  ^${NEIGHBOR}$$ -> GetInterface
+
+GetInterface
+  ^\s+${LOCAL_INTERFACE}\s+${HOLDTIME}\s+${CAPABILITY}\s*${PLATFORM}\s*${NEIGHBOR_INTERFACE}\s*$$ -> Record CDP
+
+EOF
