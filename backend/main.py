@@ -457,10 +457,11 @@ def main() -> None:
     print("\n10. Print edge information")
     print_edge_information(edges, edges_with_names, switches, edges_without_duplicated)
 
-# To-Do
-# a) Obtain full topology data: edge
-# b) Focus on deleting duplicated links: edges_without_duplicated
-# c) Focus on deleting links with Role=Altn in a interface
+    # DONE: a) Obtain full topology data: edge variable
+    # DONE: b) Focus on deleting duplicated links: edges_without_duplicated variable
+
+    # To-Do
+    # c) Focus on deleting links with Role=Altn in a interface
 
 if __name__ == "__main__":
     start_total: float = time.time()
