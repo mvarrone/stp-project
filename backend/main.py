@@ -292,7 +292,7 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
 
 def main() -> None:
     # 1. Load credentials
-    print("\n1. Load credentials")
+    print("1. Load credentials")
     devices: List[Dict[str, Any]] = load_credentials(CREDENTIALS_FILE)
     if not devices:
         return

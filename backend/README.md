@@ -77,3 +77,12 @@ Currently, this project includes only Cisco devices. That is why CDP is being us
 * Modify the exception handling as needed for your specific use case.
 
 This README should help anyone understand the purpose, configuration, and usage of the app
+
+## Output folder
+
+Folder containing output files for executions of *./backend/main.py* file 
+
+### PowerShell
+```python
+py .\main.py > ".\output\output_$(Get-Date -Format 'ddMMMyyyy_HHmmss').txt"
+```
