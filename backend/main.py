@@ -17,20 +17,20 @@ CREDENTIALS_FILE: str = "./device_credentials.json"
 SENTINEL_VALUE_FOR_LEVEL: int = 9999
 connection_id: int = 0
 
-def print_node_structure(nodes):
+def print_node_structure(nodes) -> None:
     # Sort the data by 'level'
     sorted_data = sorted(nodes, key = lambda x: x.get("level"))
 
     # Print the network tree structure
-    print("\nNetwork Tree Structure:")
-    print(23 * '-')
+    print("\nOption 1: Network Tree Structure")
+    print(32 * '-')
     # Option 1
     for item in sorted_data:
         indent = 2 * '-' * item.get("level")
         print(f"{indent}{item.get("label")} - {item.get("title")}, Level: {item.get("level")}")
 
-    print("\nNetwork Tree Structure:")
-    print(23 * '-')
+    print("\nOption 2: Network Tree Structure")
+    print(32 * '-')
     # Option 2
     for item in sorted_data:
         indent = 2 * ' ' * item.get("level")
@@ -359,6 +359,7 @@ def main() -> None:
     #print(nodes)
 
     #7. Print node tree structure
+    print("\n7. Print node tree structure")
     print_node_structure(nodes)
 
 if __name__ == "__main__":
