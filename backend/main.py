@@ -38,9 +38,8 @@ def print_node_structure(nodes) -> None:
 
 
 def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
-
     # Level 0: Node for Root Bridge
-    def calculate_node_for_level_0(root_bridge_data):
+    def calculate_node_for_level_0(root_bridge_data) -> List[Dict[str, Any]]:
         list_of_nodes = []
         node = {
             "id": root_bridge_data.get("id"),
@@ -57,7 +56,7 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
 
     # Once the root bridge node has been added, let's continue adding the remaining nodes
     # Level 1: Nodes for Root Bridge neighbors
-    def calculate_node_for_level_1(list_of_nodes, root_bridge_data, results):
+    def calculate_node_for_level_1(list_of_nodes, root_bridge_data, results) -> List[Dict[str, Any]]:
         root_bridge_neighbor_list = []
         root_bridge_neighbors = root_bridge_data.get("neighbors")
 
@@ -85,7 +84,7 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
 
     # Level > 1: Remaining nodes
     print("\nFunction nodes_with_level_higher_than_1()")
-    def nodes_with_level_higher_than_1(list_of_nodes):
+    def nodes_with_level_higher_than_1(list_of_nodes) -> List[Dict[str, Any]]:
         current_level = max(item.get("level") for item in list_of_nodes)
         #print("\ncurrent_level:\n", current_level)
 
@@ -169,7 +168,7 @@ def find_root_bridge(results: List[Dict[str, Any]]) -> Dict[str, Any]:
     return root_bridge_data
 
 
-def get_prompt(connection, device_type):
+def get_prompt(connection, device_type) -> str:
     if device_type == "cisco_ios":
         prompt = connection.find_prompt()
         # print(f"{prompt = }")
@@ -314,7 +313,6 @@ def main() -> None:
             results.append(future.result())
 
     print("\nDEBUG:")
-
     for result in results:
         pprint(result) 
 
