@@ -17,11 +17,49 @@ CREDENTIALS_FILE: str = "./device_credentials.json"
 SENTINEL_VALUE_FOR_LEVEL: int = 9999
 connection_id: int = 0
 
-def process_edges(root_bridge_data, results) -> List[Dict[str, int]]:
-    edges = []
 
-    print(edges)
-    return edges
+def process_edges(results) -> List[Dict[str, Any]]:
+    edges = []
+    edges_with_names = []
+    switches = []
+
+    seen_edges = set()
+    edges_without_duplicated = []
+
+    # Extracting edges from results
+    for result in results:
+        switch_name = result.get("prompt")
+        switch_id = result.get("id")
+        cdp_data = result.get("cdp_output_parsed")
+
+        switch = {'name': switch_name, 'id': switch_id}   
+        switches.append(switch)
+
+        for entry in cdp_data:
+            neighbor_prompt = entry.get("neighbor")
+            edge_with_name = {'from': switch_name, 'to': neighbor_prompt}
+            edges_with_names.append(edge_with_name)
+
+            neighbor_id = None
+            # Find neighbor id based on neighbor prompt
+            for neighbor_switch in results:
+                if neighbor_switch.get("prompt") == neighbor_prompt:
+                    neighbor_id = neighbor_switch.get("id")
+                    break
+            
+            if neighbor_id is not None:
+                edge = {'from': switch_id, 'to': neighbor_id}
+                edges.append(edge)
+
+                # Create a tuple for the edge to check for duplicates
+                edge_tuple = tuple(sorted((switch_id, neighbor_id)))
+                if edge_tuple not in seen_edges:
+                    seen_edges.add(edge_tuple)
+                    edge_wo = {'from': switch_id, 'to': neighbor_id}
+                    edges_without_duplicated.append(edge_wo)
+
+    return edges, edges_with_names, switches, edges_without_duplicated
+
 
 def print_node_structure(nodes) -> None:
     # Sort nodes by key 'level'
@@ -376,7 +414,7 @@ def main() -> None:
     # 6. Build nodes
     print("\n6. Build nodes")
     nodes = process_nodes(root_bridge_data, results)
-    #print(nodes)
+    print(nodes)
     print("\nBetter way to show nodes:")
     for node in nodes:
         print(node)
@@ -387,7 +425,26 @@ def main() -> None:
 
     # 8. Build edges
     print("\n8. Build edges")
-    edges = process_edges(root_bridge_data, results)
+    edges, edges_with_names, switches, edges_without_duplicated = process_edges(results)
+    #print(switches)
+    print("\nBetter way to show switches:")
+    for switch in switches:
+        print(switch)
+
+    #print(edges)
+    print("\nBetter way to show edges:")
+    for edge in edges:
+        print(edge)
+        
+    #print(edges_with_names)
+    print("\nBetter way to show edges_with_names:")
+    for edges_with_name in edges_with_names:
+        print(edges_with_name)
+
+    #print(edges_without_duplicated)
+    print("\nBetter way to show edges_without_duplicated:")
+    for edge_wo in edges_without_duplicated:
+        print(edge_wo)
 
 
 if __name__ == "__main__":
