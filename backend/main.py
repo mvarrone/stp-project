@@ -12,9 +12,21 @@ from netmiko import (
 )
 from netmiko.utilities import get_structured_data
 
+# Variables
 CREDENTIALS_FILE: str = "./device_credentials.json"
-SENTINEL_VALUE_FOR_LEVEL = 9999
-connection_id = 0 # The connection_id is used as a counter for each device connection and is later used in the nodes variable.
+SENTINEL_VALUE_FOR_LEVEL: int = 9999
+connection_id: int = 0 # The connection_id is used as a counter for each device connection and is later used in the nodes variable.
+
+def print_node_structure(nodes):
+    # Sort the data by 'level'
+    sorted_data = sorted(nodes, key = lambda x: x.get("level"))
+
+    # Print the network tree structure
+    print("\nNetwork Tree Structure:")
+    for item in sorted_data:
+        indent = '  ' * item.get("level")
+        print(f"{indent}{item.get("label")} - {item.get("title")}, Level: {item.get("level")}")
+
 
 def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
     list_of_nodes = []
@@ -324,6 +336,9 @@ def main() -> None:
     print("\n6. Build nodes")
     nodes = process_nodes(root_bridge_data, results)
     #print(nodes)
+
+    #7. Print node tree structure
+    print_node_structure(nodes)
 
 if __name__ == "__main__":
     start_total: float = time.time()
