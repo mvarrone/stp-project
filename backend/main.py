@@ -12,6 +12,7 @@ from netmiko import (
 )
 from netmiko.utilities import get_structured_data
 
+
 # Variables
 CREDENTIALS_FILE: str = "./device_credentials.json"
 SENTINEL_VALUE_FOR_LEVEL: int = 9999
@@ -38,7 +39,7 @@ def print_edge_information(edges, edges_with_names, switches, edges_without_dupl
     for edge_wo in edges_without_duplicated:
         print(edge_wo)
 
-def process_edges(results):
+def process_edges(results) -> List[Dict[str, Any]]:
     edges: List[Dict[str, int]] = []
     edges_with_names: List[Dict[str, str]] = []
     switches: List[Dict[str, Any]] = []
@@ -272,6 +273,31 @@ def load_credentials(CREDENTIALS_FILE: str) -> List[Dict[str, Any]]:
         return devices
     return devices
 
+def modify_stp_parsed_data(parsed_stp_output, device_type) -> List[Dict[str, str]]:
+    if device_type == "cisco_ios":
+        for entry in parsed_stp_output:
+            if 'interface' in entry:
+                entry['interface'] = entry['interface'].replace('Gi', 'G ')
+
+        return parsed_stp_output
+
+
+def modify_cdp_parsed_data(parsed_cdp_output, device_type) -> List[Dict[str, str]]:
+    if device_type == "cisco_ios":
+        for entry in parsed_cdp_output:
+            if 'neighbor' in entry:
+                entry['neighbor'] = entry['neighbor'].split('.')[0]
+
+            if 'capability' in entry:
+                entry['capability'] = entry['capability'].strip()
+
+            if 'local_interface' in entry:
+                entry['local_interface'] = entry['local_interface'].replace('Gig ', 'G ')
+            
+            if 'neighbor_interface' in entry:
+                entry['neighbor_interface'] = entry['neighbor_interface'].replace('Gig ', 'G ')   
+
+        return parsed_cdp_output
 
 def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
     result: Dict[str, Any] = {
@@ -306,8 +332,10 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             if "secret" in netmiko_device:
                 connection.enable()  # Enter privileged EXEC mode
 
+            device_type = netmiko_device.get("device_type")
+
             # Get prompt for each device
-            result["prompt"] = get_prompt(connection, netmiko_device.get("device_type"))
+            result["prompt"] = get_prompt(connection, device_type)
 
             # Get raw STP data
             result["stp_output_raw"] = connection.send_command(
@@ -315,11 +343,17 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             )
 
             # Parse STP data locally
-            result["stp_output_parsed"] = get_structured_data(
+            parsed_stp_output = get_structured_data(
                 raw_output=result.get("stp_output_raw"),
                 platform=connection.device_type,
                 command=spanning_tree_command,
             )
+
+            # Post processing for STP parsed data 
+            parsed_stp_output = modify_stp_parsed_data(parsed_stp_output, device_type)
+
+            # Assign post processed data to dictionary
+            result["stp_output_parsed"] = parsed_stp_output
 
             # Get raw CDP data
             result["cdp_output_raw"] = connection.send_command(
@@ -327,23 +361,14 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             )
 
             # Parse CDP data locally
-            parsed_cdp_output =  get_structured_data(
+            parsed_cdp_output = get_structured_data(
                 raw_output=result.get("cdp_output_raw"),
                 platform=connection.device_type,
                 command=cdp_neighbors_command,
             )
 
-            # Post parse processing for CDP
-            def modify_neighbors(parsed_cdp_output):
-                for entry in parsed_cdp_output:
-                    if 'neighbor' in entry:
-                        entry['neighbor'] = entry['neighbor'].split('.')[0]
-                    if 'capability' in entry:
-                        entry['capability'] = entry['capability'].strip()
-                return parsed_cdp_output
-
-            # Modify the neighbor names
-            parsed_cdp_output = modify_neighbors(parsed_cdp_output)
+            # Post processing for CDP parsed data 
+            parsed_cdp_output = modify_cdp_parsed_data(parsed_cdp_output, device_type)
 
             # Assign post processed data to dictionary
             result["cdp_output_parsed"] = parsed_cdp_output
@@ -404,27 +429,45 @@ def main() -> None:
     # 3. Count successes and failures
     print("\n3. Count successes and failures")
     connection_counter: Counter = Counter()
+    successful_connections: List[str] = []
+    failed_connections: Dict[str, List[str]] = {
+        "authentication_failure": [],
+        "timeout": [],
+        "other_failure": []
+    }
     for result in results:
-        connection_counter[result.get("status", "unknown")] += 1
+        status = result.get("status", "unknown")
+        connection_counter[status] += 1
+        device_info = f"{result['prompt']} - {result['device']}"
+        if status == "success":
+            successful_connections.append(device_info)
+        else:
+            failed_connections[status].append(device_info)
     print("Done")
 
     # 4. Print results
     print("\n4. Print results\n\nSummary of connections:")
     total_devices = len(devices)
-    successful_connections = connection_counter.get("success", 0)
-    successful_connections_percentaje = 100 * successful_connections / total_devices
-    print(f"--Successful connections: {successful_connections}/{total_devices} ({successful_connections_percentaje} %)")
-    failed_connections = total_devices - successful_connections
-    failed_connections_percentaje = 100 * failed_connections / total_devices
-    print(f"--Failed connections: {failed_connections}/{total_devices} ({failed_connections_percentaje} %)")
+    successful_count = connection_counter.get("success", 0)
+    successful_percentage = 100 * successful_count / total_devices
+    print(f"--Successful connections: {successful_count}/{total_devices} ({successful_percentage:.1f}%)")
+    if successful_count > 0:
+        for device in successful_connections:
+            print(f"    {device}")
 
-    # Define all possible statuses for failed connections
+    failed_count = total_devices - successful_count
+    failed_percentage = 100 * failed_count / total_devices
+    print(f"--Failed connections: {failed_count}/{total_devices} ({failed_percentage:.1f}%)")
+
     all_statuses = {"authentication_failure", "timeout", "other_failure"}
     for status in sorted(all_statuses):
         count = connection_counter.get(status, 0)
-        print(f"----{status}: {count}/{total_devices}")
+        print(f"  --{status}: {count}/{total_devices}")
+        if count > 0:
+            for device in failed_connections[status]:
+                print(f"      {device}")
 
-    if not successful_connections:
+    if not successful_count:
         print("\nNo successful connections were made. Ending here")
         return
 
@@ -459,9 +502,9 @@ def main() -> None:
 
     # DONE: a) Obtain full topology data: edge variable
     # DONE: b) Focus on deleting duplicated links: edges_without_duplicated variable
+    # DONE: c) Standardize stp and cdp data
 
     # To-Do
-    # c) Standardize stp and cdp interface names
 
     # d) Focus on deleting links with Role=Altn in a interface
     # Posible solucion:
