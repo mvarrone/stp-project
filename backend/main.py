@@ -16,6 +16,58 @@ from netmiko.utilities import get_structured_data
 SENTINEL_VALUE_FOR_LEVEL: int = 9999
 connection_id: int = 0
 
+def print_updated_edge_information(final_edges) -> None:
+    #print(final_edges)
+    print("\nBetter way to show final_edges:")
+    for edge in final_edges:
+        print(edge)
+
+def remove_blocked_links(links_to_be_deleted, edges_without_duplicated) -> List[Dict[str, int]]:
+    print("\nlinks_to_be_deleted: ", links_to_be_deleted)
+    print("\nedges_without_duplicated: ", edges_without_duplicated)
+
+    for link in links_to_be_deleted:
+        # Create the opposite link dictionary
+        opposite_link = {'from': link['to'], 'to': link['from']}
+        
+        # Try to remove the original link if it exists
+        if link in edges_without_duplicated:
+            edges_without_duplicated.remove(link)
+        
+        # Try to remove the opposite link if it exists
+        if opposite_link in edges_without_duplicated:
+            edges_without_duplicated.remove(opposite_link)
+    
+    print("\nedges_without_duplicated: ", edges_without_duplicated)
+    return edges_without_duplicated
+
+def identify_blocked_links(results) -> List[Dict[str, int]]:
+    links_to_be_deleted = []
+    for result in results:
+        stp_output_parsed = result.get("stp_output_parsed")
+        device_name = result.get("prompt")
+        device_id = result.get("id")
+        for stp_parsed in stp_output_parsed:
+            role = stp_parsed.get("role")
+            if role == "Altn":
+                stp_interface = stp_parsed.get("interface")
+                print(f"Role Altn has been found on {stp_interface = }, {device_name = } - {device_id = }")
+                cdp_output_parsed = result.get("cdp_output_parsed")
+                for cdp_parsed in cdp_output_parsed:
+                    if stp_interface == cdp_parsed.get("local_interface"):
+                        neighbor_name = cdp_parsed.get("neighbor")
+                        print("neighbor_name: ", neighbor_name)
+                    
+    for result in results:
+        if neighbor_name == result.get("prompt"):
+            neighbor_id = result.get("id")
+            print("neighbor_id: ", neighbor_id)
+
+    value = {"from": device_id, "to": neighbor_id}
+    links_to_be_deleted.append(value)
+
+    return links_to_be_deleted        
+
 def print_edge_information(edges, edges_with_names, switches, edges_without_duplicated, edges_without_duplicated_with_names) -> None:
     #print(switches)
     print(f"\nBetter way to show switches:\nSwitch references")
@@ -511,27 +563,25 @@ def main() -> None:
     print("\n10. Print edge information")
     print_edge_information(edges, edges_with_names, switches, edges_without_duplicated, edges_without_duplicated_with_names)
 
-    # DONE: a) Obtain full topology data: edges variable
-    # DONE: b) Focus on deleting duplicated links: edges_without_duplicated variable
-    # DONE: c) Standardize stp and cdp data
+    # 11. Identify blocked link(s) where one of the interfaces is in an Altn Role
+    print("\n11. Identify blocked link(s) where one of the interfaces is in an Altn Role")
+    links_to_be_deleted = identify_blocked_links(results)
 
-    # To-Do
-
-    # d) Focus on deleting links from the edges_without_duplicated variable where Role=Altn in a interface
-
-    # Posible solucion:
-    # Checkear dentro de stp_output_parsed if stp_output_parsed.Role==Altn
-    # Si lo encuentra, obtener stp_output_parsed.interface y result.prompt
-    # Comprobar en result.cdp_output_parsed cuales son sus vecinos.
-    # Dentro de ahi, checkear si cdp_output_parsed.local_interface es igual a
-    # stp_output_parsed.interface. Caso afirmativo: obtenemos cdp_output_parsed.neighbor
-    # Asi, ya tenemos ambos switches en cuestion.
-    # Falta identificar que id lleva cada switch
-    # Tendriamos algo como from: 0 to:1, convertirlo a from:1 to:0
-    # Finalmente, buscar en edges_without_duplicated si se encuentra alguna de esas 2 combinaciones
-    # Caso afirmativo: Borrarla de edges_without_duplicated
-    # Guardar como edges_without_duplicated_and_wo_blocked
+    # 12. Remove link(s)
+    print("\n12. Remove link(s)")
+    edges = remove_blocked_links(links_to_be_deleted, edges_without_duplicated)
     
+    # 13. Print updated edge information
+    print("\n13. Print updated edge information")
+    print_updated_edge_information(edges)
+ 
+    # 14. Print final data
+    print("\n14. Print final data\n") 
+    data = {
+        "nodes": nodes,
+        "edges": edges
+    }
+    print(data)
 
 if __name__ == "__main__":
     start_total: float = time.time()
