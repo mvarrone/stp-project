@@ -127,7 +127,7 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
         return nodes
     
     nodes = calculate_node_for_level_0(root_bridge_data)
-    print("\nLevel 0 - nodes:\n", nodes)
+    #print("\nLevel 0 - nodes:\n", nodes)
 
     # Once the root bridge node has been added, let's proceed with root bridge neighbors
     # Level 1: Nodes for Root Bridge neighbors
@@ -139,7 +139,7 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
             #neighbor_name = neighbor.get("neighbor").split(".")[0]
             neighbor_name = neighbor.get("neighbor")
             root_bridge_neighbor_list.append(neighbor_name)
-        print("\nroot_bridge_neighbor_list:\n", root_bridge_neighbor_list)
+        #print("\nroot_bridge_neighbor_list:\n", root_bridge_neighbor_list)
         
         for root_bridge_neighbor in root_bridge_neighbor_list:
             for result in results:
@@ -155,10 +155,10 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
         return nodes
 
     nodes = calculate_nodes_for_level_1(nodes, root_bridge_data, results)
-    print("\nLevel 1 - nodes:\n", nodes)
+    #print("\nLevel 1 - nodes:\n", nodes)
 
     # Level > 1: Remaining nodes
-    print("\nFunction: calculate_nodes_with_level_higher_than_1()")
+    #print("\nFunction: calculate_nodes_with_level_higher_than_1()")
     def calculate_nodes_with_level_higher_than_1(nodes) -> List[Dict[str, Any]]:
         current_level = max(node.get("level") for node in nodes)
         #print("\ncurrent_level:", current_level)
@@ -167,8 +167,8 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
             node for node in nodes if node.get("level") == current_level
         ]
 
-        print(f"\nnodes to analize because we are in level {current_level}")
-        print("nodes to analize:", nodes_to_analize)
+        #print(f"\nnodes to analize because we are in level {current_level}")
+        #print("nodes to analize:", nodes_to_analize)
 
         neighbors_data = []
         for node in nodes_to_analize:
@@ -203,7 +203,7 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
                         nodes.append(node)
 
         #print("\nresults:", results)
-        print("\nnodes:\n", nodes)
+        #print("\nnodes:\n", nodes)
         return nodes
     
     for i in range(1, 10):
@@ -492,6 +492,7 @@ def main() -> None:
     # 6. Build nodes
     print("\n6. Build nodes")
     nodes = process_nodes(root_bridge_data, results)
+    print("Done")
 
     # 7. Print node information
     print("\n7. Print node information")
@@ -516,7 +517,8 @@ def main() -> None:
 
     # To-Do
 
-    # d) Focus on deleting links with Role=Altn in a interface
+    # d) Focus on deleting links from the edges_without_duplicated variable where Role=Altn in a interface
+
     # Posible solucion:
     # Checkear dentro de stp_output_parsed if stp_output_parsed.Role==Altn
     # Si lo encuentra, obtener stp_output_parsed.interface y result.prompt
