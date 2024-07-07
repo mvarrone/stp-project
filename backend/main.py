@@ -12,15 +12,13 @@ from netmiko import (
 )
 from netmiko.utilities import get_structured_data
 
-
 # Variables
-CREDENTIALS_FILE: str = "./device_credentials.json"
 SENTINEL_VALUE_FOR_LEVEL: int = 9999
 connection_id: int = 0
 
-def print_edge_information(edges, edges_with_names, switches, edges_without_duplicated) -> None:
+def print_edge_information(edges, edges_with_names, switches, edges_without_duplicated, edges_without_duplicated_with_names) -> None:
     #print(switches)
-    print("\nBetter way to show switches:")
+    print(f"\nBetter way to show switches:\nSwitch references")
     for switch in switches:
         print(switch)
 
@@ -39,11 +37,17 @@ def print_edge_information(edges, edges_with_names, switches, edges_without_dupl
     for edge_wo in edges_without_duplicated:
         print(edge_wo)
 
+    #print(edges_without_duplicated_with_names)
+    print("\nBetter way to show edges_without_duplicated_with_names:")
+    for edge_wo_with_name in edges_without_duplicated_with_names:
+        print(edge_wo_with_name)
+
 def process_edges(results) -> List[Dict[str, Any]]:
     edges: List[Dict[str, int]] = []
     edges_with_names: List[Dict[str, str]] = []
     switches: List[Dict[str, Any]] = []
     edges_without_duplicated: List[Dict[str, int]] = []
+    edges_without_duplicated_with_names: List[Dict[str, str]] = []
 
     seen_edges = set()
 
@@ -78,8 +82,10 @@ def process_edges(results) -> List[Dict[str, Any]]:
                     seen_edges.add(edge_tuple)
                     edge_wo = {'from': switch_id, 'to': neighbor_id}
                     edges_without_duplicated.append(edge_wo)
+                    edges_without_duplicated_with_names.append({'from': switch_name, 'to': neighbor_prompt})
 
-    return edges, edges_with_names, switches, edges_without_duplicated
+
+    return edges, edges_with_names, switches, edges_without_duplicated, edges_without_duplicated_with_names
 
 def print_node_information(nodes) -> None:
     #print(nodes)
@@ -145,7 +151,7 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
                         "title": result.get("title")
                     }
                     nodes.append(node)
-                    result["level"] = 1
+                    result["level"] = 1 # Update results dictionary changing from 9999 to 1 for root bridge neighbors level value
         return nodes
 
     nodes = calculate_nodes_for_level_1(nodes, root_bridge_data, results)
@@ -201,7 +207,7 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
         return nodes
     
     for i in range(1, 10):
-        print(f"\nIteration {i = }")
+        #print(f"\nIteration {i = }")
         nodes = calculate_nodes_with_level_higher_than_1(nodes)
     return nodes
 
@@ -231,7 +237,7 @@ def find_root_bridge(results: List[Dict[str, Any]]) -> Dict[str, Any]:
                 root_bridge_data["label"] = result.get("label")
                 root_bridge_data["title"] = result.get("title")
                 root_bridge_data["neighbors"] = result.get("cdp_output_parsed")
-                result["level"] = 0
+                result["level"] = 0 # Update results dictionary changing from 9999 to 0 for root bridge level value
                 return root_bridge_data
 
     root_bridge_data = {}
@@ -386,6 +392,9 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             # Assign a SENTINEL_VALUE_FOR_LEVEL to each device for being used in nodes later
             # SENTINEL_VALUE_FOR_LEVEL: It indicates that the key level has not yet been determined
             # It will be updated in the process_nodes function later
+            # All devices start having a value of 9999
+            # When root bridge is found, that device gets a value of 0
+            # When root bridge neighbor(s) is/are found, that/those device(s) will get a value of 1
             result["level"] = SENTINEL_VALUE_FOR_LEVEL
 
             # Increase ID
@@ -402,6 +411,7 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
 def main() -> None:
     # 1. Load credentials
     print("1. Load credentials")
+    CREDENTIALS_FILE: str = "./device_credentials.json"
     devices: List[Dict[str, Any]] = load_credentials(CREDENTIALS_FILE)
     if not devices:
         return
@@ -493,14 +503,14 @@ def main() -> None:
 
     # 9. Build edges
     print("\n9. Build edges")
-    edges, edges_with_names, switches, edges_without_duplicated = process_edges(results)
+    edges, edges_with_names, switches, edges_without_duplicated, edges_without_duplicated_with_names = process_edges(results)
     print("Done")
 
     # 10. Print edge information
     print("\n10. Print edge information")
-    print_edge_information(edges, edges_with_names, switches, edges_without_duplicated)
+    print_edge_information(edges, edges_with_names, switches, edges_without_duplicated, edges_without_duplicated_with_names)
 
-    # DONE: a) Obtain full topology data: edge variable
+    # DONE: a) Obtain full topology data: edges variable
     # DONE: b) Focus on deleting duplicated links: edges_without_duplicated variable
     # DONE: c) Standardize stp and cdp data
 
