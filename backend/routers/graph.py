@@ -12,6 +12,8 @@ from netmiko import (
 )
 from netmiko.utilities import get_structured_data
 
+from fastapi import APIRouter, Request
+
 # Variables
 SENTINEL_VALUE_FOR_LEVEL: int = 9999
 connection_id: int = 0
@@ -587,22 +589,19 @@ def main() -> None:
     print(data)
     return data
 
-from fastapi import APIRouter, Request
-
 router = APIRouter(tags=["Graph"])
 
 @router.get("/stp-graph")
 async def graph_endpoint(request: Request):
-
     start_total: float = time.time()
     data = main()
     end_total: float = time.time() - start_total
     end_total, unit = print_execution_time(end_total)
+    
+    nodes = data.get("nodes")
+    edges = data.get("edges")
 
     return {
-        "data": data,
-        "time_consumed": {
-            "time": end_total,
-            "unit": unit,
-        }
+        "nodes": nodes,
+        "edges": edges
     }
