@@ -12,9 +12,6 @@ from netmiko import (
 )
 from netmiko.utilities import get_structured_data
 
-# Variables
-SENTINEL_VALUE_FOR_LEVEL: int = 9999
-connection_id: int = 0
 
 def print_updated_edge_information(final_edges) -> None:
     #print(final_edges)
@@ -265,7 +262,7 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
                 if result.get("label") == neighbor:
                     level_found = result.get("level")
                     #print("\nlevel_found:", level_found, "\n")
-                    if level_found == SENTINEL_VALUE_FOR_LEVEL:
+                    if level_found == 9999:
                         updated_level = current_level + 1
                         result["level"] = updated_level
                         #print(f"{neighbor}: Level changed from {level_found} to {updated_level}")
@@ -336,12 +333,18 @@ def get_prompt(connection, device_type) -> str:
     return prompt
 
 
-def print_execution_time(end_total: float) -> None:
+def print_execution_time(end_total: float):
+    end_total = round(end_total, 2)
+
     if end_total > 1:
-        print(f"\nTotal script execution time: {end_total:.2f} s")
+        unit = "s"
+        print(f"\nTotal script execution time: {end_total} {unit}")
     else:
+        unit = "ms"
         end_total *= 1000
-        print(f"\nTotal script execution time: {end_total:.2f} ms")
+        print(f"\nTotal script execution time: {end_total} {unit}")
+    
+    return end_total, unit
 
 
 def load_credentials(CREDENTIALS_FILE: str) -> List[Dict[str, Any]]:
@@ -381,6 +384,8 @@ def modify_cdp_parsed_data(parsed_cdp_output, device_type) -> List[Dict[str, str
         return parsed_cdp_output
 
 def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
+    global connection_id
+
     result: Dict[str, Any] = {
         "device": device.get("host", ""),
         "port": device.get("port", ""),
@@ -396,8 +401,6 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
         "title": "",
         "level": "",
     }
-
-    global connection_id # The connection_id variable is used as a counter for each device connection and is later used in the nodes variable.
 
     spanning_tree_command = device.get("spanning_tree_command", "show spanning-tree")
     cdp_neighbors_command = device.get("cdp_neighbors_command", "show cdp neighbors")
@@ -464,13 +467,13 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             # Assign a title to each device for being used in nodes later
             result["title"] = f"{device.get("host")} - {device.get("device_type")}"
             
-            # Assign a SENTINEL_VALUE_FOR_LEVEL to each device for being used in nodes later
-            # SENTINEL_VALUE_FOR_LEVEL: It indicates that the key level has not yet been determined
+            # Assign a value of 9999 to each device for being used in nodes later
+            # Value of 9999: It indicates that the key level has not yet been determined
             # It will be updated in the process_nodes function later
             # All devices start having a value of 9999
             # When root bridge is found, that device gets a value of 0
             # When root bridge neighbor(s) is/are found, that/those device(s) will get a value of 1
-            result["level"] = SENTINEL_VALUE_FOR_LEVEL
+            result["level"] = 9999
 
             # Increase ID
             connection_id += 1
@@ -483,7 +486,10 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def main() -> None:
+def main():
+    global connection_id
+    connection_id = 0
+
     # 1. Load credentials
     print("1. Load credentials")
     CREDENTIALS_FILE: str = "./device_credentials.json"
@@ -606,9 +612,10 @@ def main() -> None:
         "edges": edges
     }
     print(data)
+    return data
 
 if __name__ == "__main__":
     start_total: float = time.time()
-    main()
+    data = main()
     end_total: float = time.time() - start_total
-    print_execution_time(end_total)
+    end_total, unit = print_execution_time(end_total)
