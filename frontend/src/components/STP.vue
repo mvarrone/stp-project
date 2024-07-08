@@ -10,6 +10,7 @@
             {{ errorMessage }}
         </div>
         <div v-else>
+            <h2>Elapsed time: {{ elapsed_time_value }} {{ elapsed_time_unit }}</h2>
             <div id="canvas_network"></div>
         </div>
     </div>
@@ -29,7 +30,9 @@ export default {
             nodes: [],
             edges: [],
             isLoading: false,
-            errorMessage: ''
+            errorMessage: '',
+            elapsed_time_value: '',
+            elapsed_time_unit: '',
         }
     },
     mounted() {
@@ -71,6 +74,7 @@ export default {
                         stabilization: false
                     },
                 };
+                // Initialize the network
                 const network = new Network(container, data, options);
             })
             .catch(err => {
@@ -86,6 +90,8 @@ export default {
                 .then(response => {
                     this.nodes = response.data.nodes;
                     this.edges = response.data.edges;
+                    this.elapsed_time_value = response.data.elapsed_time.value;
+                    this.elapsed_time_unit = response.data.elapsed_time.unit;
                 })
                 .catch(error => {
                     console.error("An error occurred:", error);
