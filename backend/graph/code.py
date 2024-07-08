@@ -316,11 +316,13 @@ def get_prompt(connection, device_type) -> str:
 def print_execution_time(end_total: float) -> None:
     if end_total > 1:
         unit = "s"
-        print(f"\nTotal script execution time: {end_total:.2f} {unit}")
+        print(f"\nTotal script execution time: {end_total} {unit}")
     else:
-        end_total = round(end_total * 1000, 2)
+        end_total *= 1000 
         unit = "ms"
-        print(f"\nTotal script execution time: {end_total:.2f} {unit}")
+        print(f"\nTotal script execution time: {end_total} {unit}")
+        
+    end_total = round(end_total, 2)
     return end_total, unit
 
 
