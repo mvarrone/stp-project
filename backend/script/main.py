@@ -31,8 +31,8 @@ def remove_blocked_links(edges_to_be_deleted, edges_without_duplicated) -> List[
     
     print("edges_to_be_deleted: ", edges_to_be_deleted)
 
-    print("\nedges_without_duplicated: ", edges_without_duplicated)
-    print(f"len(edges_without_duplicated) = {len(edges_without_duplicated)} element(s)")
+    print(f"\nedges_without_duplicated: {len(edges_without_duplicated)} element(s)")
+    print(edges_without_duplicated)
 
     for edge in edges_to_be_deleted:
         # Create the opposite edge dictionary
@@ -47,8 +47,8 @@ def remove_blocked_links(edges_to_be_deleted, edges_without_duplicated) -> List[
             edges_without_duplicated.remove(opposite_edge)
     
     edges = edges_without_duplicated
-    print("\nedges: ", edges)
-    print(f"len(edges) = {len(edges)} element(s)")
+    print(f"\nedges: {len(edges)} element(s)")
+    print(edges)
     return edges
 
 def identify_blocked_links(results: List[Dict[str, Any]]) -> List[Dict[str, int]]:
