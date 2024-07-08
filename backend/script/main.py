@@ -22,51 +22,74 @@ def print_updated_edge_information(final_edges) -> None:
     for edge in final_edges:
         print(edge)
 
-def remove_blocked_links(links_to_be_deleted, edges_without_duplicated) -> List[Dict[str, int]]:
-    print("\nlinks_to_be_deleted: ", links_to_be_deleted)
-    print("\nedges_without_duplicated: ", edges_without_duplicated)
-
-    for link in links_to_be_deleted:
-        # Create the opposite link dictionary
-        opposite_link = {'from': link['to'], 'to': link['from']}
-        
-        # Try to remove the original link if it exists
-        if link in edges_without_duplicated:
-            edges_without_duplicated.remove(link)
-        
-        # Try to remove the opposite link if it exists
-        if opposite_link in edges_without_duplicated:
-            edges_without_duplicated.remove(opposite_link)
+def remove_blocked_links(edges_to_be_deleted, edges_without_duplicated) -> List[Dict[str, int]]:
+    m = len(edges_to_be_deleted)
+    if m == 1:
+        print("We found that 1 edge must be deleted")
+    else:
+        print(f"We found that {m} edges must be deleted")
     
+    print("edges_to_be_deleted: ", edges_to_be_deleted)
+
     print("\nedges_without_duplicated: ", edges_without_duplicated)
-    return edges_without_duplicated
+    print(f"len(edges_without_duplicated) = {len(edges_without_duplicated)} element(s)")
 
-def identify_blocked_links(results) -> List[Dict[str, int]]:
-    links_to_be_deleted = []
+    for edge in edges_to_be_deleted:
+        # Create the opposite edge dictionary
+        opposite_edge = {'from': edge.get("to"), 'to': edge.get("from")}
+        
+        # Try to remove the original edge if it exists
+        if edge in edges_without_duplicated:
+            edges_without_duplicated.remove(edge)
+        
+        # Try to remove the opposite edge if it exists
+        if opposite_edge in edges_without_duplicated:
+            edges_without_duplicated.remove(opposite_edge)
+    
+    edges = edges_without_duplicated
+    print("\nedges: ", edges)
+    print(f"len(edges) = {len(edges)} element(s)")
+    return edges
+
+def identify_blocked_links(results: List[Dict[str, Any]]) -> List[Dict[str, int]]:
+    edges_to_be_deleted = []
+
     for result in results:
-        stp_output_parsed = result.get("stp_output_parsed")
-        device_name = result.get("prompt")
+        #device_prompt = result.get("prompt")
         device_id = result.get("id")
-        for stp_parsed in stp_output_parsed:
-            role = stp_parsed.get("role")
-            if role == "Altn":
-                stp_interface = stp_parsed.get("interface")
-                print(f"Role Altn has been found on {stp_interface = }, {device_name = } - {device_id = }")
-                cdp_output_parsed = result.get("cdp_output_parsed")
-                for cdp_parsed in cdp_output_parsed:
-                    if stp_interface == cdp_parsed.get("local_interface"):
-                        neighbor_name = cdp_parsed.get("neighbor")
-                        print("neighbor_name: ", neighbor_name)
-                    
-    for result in results:
-        if neighbor_name == result.get("prompt"):
-            neighbor_id = result.get("id")
-            print("neighbor_id: ", neighbor_id)
+        stp_output = result.get("stp_output_parsed", [])
+        cdp_output = result.get("cdp_output_parsed", [])
 
-    value = {"from": device_id, "to": neighbor_id}
-    links_to_be_deleted.append(value)
+        # Step 1: Identify interfaces with Role=Altn
+        altn_interfaces = [entry for entry in stp_output if entry.get("role") == "Altn"]
+        #print("\naltn_interfaces", altn_interfaces)
 
-    return links_to_be_deleted        
+        for altn_interface in altn_interfaces:
+            interface_name = altn_interface.get("interface")
+            #print("\ninterface_name", interface_name)
+
+            # Step 2: Find matching CDP entry
+            matching_cdp_entry = next((entry for entry in cdp_output if entry.get("local_interface") == interface_name), None)
+            #print("\nmatching_cdp_entry", matching_cdp_entry)
+
+            if matching_cdp_entry:
+                neighbor_name = matching_cdp_entry.get("neighbor")
+                #print("\nneighbor_name", neighbor_name)
+
+                # Step 3: Find neighbor device ID
+                neighbor_device = next((dev for dev in results if dev.get("prompt") == neighbor_name), None)
+                #print("\nneighbor_device", neighbor_device)
+
+                if neighbor_device:
+                    neighbor_id = neighbor_device.get("id")
+
+                    # Step 4: Create edge dictionary
+                    edge = {
+                        "from": device_id,
+                        "to": neighbor_id
+                    }
+                    edges_to_be_deleted.append(edge)
+    return edges_to_be_deleted
 
 def print_edge_information(edges, edges_with_names, switches, edges_without_duplicated, edges_without_duplicated_with_names) -> None:
     #print(switches)
@@ -563,13 +586,14 @@ def main() -> None:
     print("\n10. Print edge information")
     print_edge_information(edges, edges_with_names, switches, edges_without_duplicated, edges_without_duplicated_with_names)
 
-    # 11. Identify blocked link(s) where one of the interfaces is in an Altn Role
-    print("\n11. Identify blocked link(s) where one of the interfaces is in an Altn Role")
-    links_to_be_deleted = identify_blocked_links(results)
+    # 11. Identify edges where exist blocked interfaces (Role = Altn)
+    print("\n11. Identify edges where exist blocked interfaces (Role = Altn)")
+    edges_to_be_deleted = identify_blocked_links(results)
+    print("Edges identified:", edges_to_be_deleted)
 
-    # 12. Remove link(s)
-    print("\n12. Remove link(s)")
-    edges = remove_blocked_links(links_to_be_deleted, edges_without_duplicated)
+    # 12. Remove edge(s)
+    print("\n12. Remove edge(s)")
+    edges = remove_blocked_links(edges_to_be_deleted, edges_without_duplicated)
     
     # 13. Print updated edge information
     print("\n13. Print updated edge information")

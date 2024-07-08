@@ -10,7 +10,7 @@
             {{ errorMessage }}
         </div>
         <div v-else>
-            <div id="mynetwork"></div>
+            <div id="canvas_network"></div>
         </div>
     </div>
 </template>
@@ -36,7 +36,7 @@ export default {
         this.getNodesAndEdges()
             .then(() => {
                 // Create and configure the network
-                const container = document.getElementById('mynetwork');
+                const container = document.getElementById('canvas_network');
                 const data = {
                     nodes: this.nodes,
                     edges: this.edges
@@ -102,7 +102,7 @@ export default {
 </script>
 
 <style>
-#mynetwork {
+#canvas_network {
     width: auto;
     height: 800px;
     border: 1px solid lightgray;
