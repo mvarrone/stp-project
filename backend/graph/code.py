@@ -560,7 +560,11 @@ def main():
 
     if not successful_count:
         print("\nNo successful connections were made. Ending here")
-        return
+        data = {
+            "nodes": [],
+            "edges": [],
+        }
+        return data
 
     # 5. Find root bridge
     print("\n5. Find root bridge")
@@ -609,7 +613,7 @@ def main():
     print("\n14. Print final data\n") 
     data = {
         "nodes": nodes,
-        "edges": edges
+        "edges": edges,
     }
     print(data)
     return data
