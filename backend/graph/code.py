@@ -465,7 +465,7 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             result["label"] = result.get("prompt")
 
             # Assign a title to each device for being used in nodes later
-            result["title"] = f"{device.get("host")} - {device.get("device_type")}"
+            result["title"] = f"SVI: {device.get("host")} - Platform: {device.get("device_type")}"
             
             # Assign a value of 9999 to each device for being used in nodes later
             # Value of 9999: It indicates that the key level has not yet been determined
