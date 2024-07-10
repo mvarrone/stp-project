@@ -608,7 +608,7 @@ def main():
     # 13. Print updated edge information
     print("\n13. Print updated edge information")
     print_updated_edge_information(edges)
- 
+
     # 14. Print final data
     print("\n14. Print final data\n") 
     data = {

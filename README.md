@@ -13,4 +13,3 @@ What we are avoiding here is the process of creating one txt file per each netwo
 Tested on 5 devices resulting in a execution time of approximately 2 seconds.
 
 Image name used for the network switches is available in the readme file of the [directory](https://github.com/mvarrone/stp-project/tree/master/backend/automate_config).
-
