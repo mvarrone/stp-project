@@ -15,6 +15,7 @@
                     <input type="checkbox" v-model="useFilteredEdges" @change="toggleEdges">
                     Show blocked links
                 </label>
+                <span class="elapsed-time">Elapsed time: {{ elapsed_time.value }} {{ elapsed_time.unit }}</span>
             </div>
             <div id="mynetwork"></div>
         </div>
@@ -36,6 +37,7 @@ export default {
             errorMessage: '',
             useFilteredEdges: false,
             network: null,
+            elapsed_time: 0
         }
     },
     mounted() {
@@ -57,6 +59,7 @@ export default {
                     this.nodes = response.data.nodes;
                     this.edges = response.data.edges;
                     this.edges_blocked_links = response.data.edges_blocked_links;
+                    this.elapsed_time = response.data.elapsed_time;
                     //console.log(response.data);
                 })
                 .catch(error => {
@@ -219,5 +222,15 @@ h2 {
     pointer-events: none;
     transition: opacity 0.3s ease;
     opacity: 1;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+}
+
+.elapsed-time {
+    margin-left: 10px;
+    font-size: 14px;
 }
 </style>
