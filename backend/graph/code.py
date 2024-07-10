@@ -13,10 +13,10 @@ from netmiko import (
 from netmiko.utilities import get_structured_data
 
 
-def print_updated_edge_information(final_edges) -> None:
-    #print(final_edges)
-    print("\nBetter way to show final_edges:")
-    for edge in final_edges:
+def print_updated_edge_information(edges_without_duplicated) -> None:
+    #print(edges_without_duplicated)
+    print("\nBetter way to show edges_without_duplicated:")
+    for edge in edges_without_duplicated:
         print(edge)
 
 def remove_blocked_links(edges_to_be_deleted, edges_without_duplicated) -> List[Dict[str, int]]:
@@ -42,11 +42,11 @@ def remove_blocked_links(edges_to_be_deleted, edges_without_duplicated) -> List[
         # Try to remove the opposite edge if it exists
         if opposite_edge in edges_without_duplicated:
             edges_without_duplicated.remove(opposite_edge)
-    
-    edges = edges_without_duplicated
-    print(f"\nedges: {len(edges)} element(s)")
-    print(edges)
-    return edges
+
+    print("\nAfter eliminating edge(s)")
+    print(f"\nedges_without_duplicated: {len(edges_without_duplicated)} element(s)")
+    print(edges_without_duplicated)
+    return edges_without_duplicated
 
 def identify_blocked_links(results: List[Dict[str, Any]]) -> List[Dict[str, int]]:
     edges_to_be_deleted = []
@@ -119,6 +119,7 @@ def process_edges(results) -> List[Dict[str, Any]]:
     edges_with_names: List[Dict[str, str]] = []
     switches: List[Dict[str, Any]] = []
     edges_without_duplicated: List[Dict[str, int]] = []
+    edges_without_duplicated_with_blocked_links: List[Dict[str, int]] = []
     edges_without_duplicated_with_names: List[Dict[str, str]] = []
 
     seen_edges = set()
@@ -154,10 +155,12 @@ def process_edges(results) -> List[Dict[str, Any]]:
                     seen_edges.add(edge_tuple)
                     edge_wo = {'from': switch_id, 'to': neighbor_id}
                     edges_without_duplicated.append(edge_wo)
+                    edges_without_duplicated_with_blocked_links.append(edge_wo)
+
                     edges_without_duplicated_with_names.append({'from': switch_name, 'to': neighbor_prompt})
 
 
-    return edges, edges_with_names, switches, edges_without_duplicated, edges_without_duplicated_with_names
+    return edges, edges_with_names, switches, edges_without_duplicated, edges_without_duplicated_with_names, edges_without_duplicated_with_blocked_links
 
 def print_node_information(nodes) -> None:
     #print(nodes)
@@ -589,7 +592,7 @@ def main():
 
     # 9. Build edges
     print("\n9. Build edges")
-    edges, edges_with_names, switches, edges_without_duplicated, edges_without_duplicated_with_names = process_edges(results)
+    edges, edges_with_names, switches, edges_without_duplicated, edges_without_duplicated_with_names, edges_without_duplicated_with_blocked_links = process_edges(results)
     print("Done")
 
     # 10. Print edge information
@@ -603,23 +606,19 @@ def main():
 
     # 12. Remove edge(s)
     print("\n12. Remove edge(s)")
-    edges = remove_blocked_links(edges_to_be_deleted, edges_without_duplicated)
+    edges_without_duplicated = remove_blocked_links(edges_to_be_deleted, edges_without_duplicated)
     
     # 13. Print updated edge information
     print("\n13. Print updated edge information")
-    print_updated_edge_information(edges)
+    print_updated_edge_information(edges_without_duplicated)
 
     # 14. Print final data
     print("\n14. Print final data\n") 
     data = {
         "nodes": nodes,
-        "edges": edges,
+        "edges": edges_without_duplicated,
+        "edges_blocked_links": edges_without_duplicated_with_blocked_links
     }
     print(data)
-    return data
 
-#if __name__ == "__main__":
-#    start_total: float = time.time()
-#    data = main()
-#    end_total: float = time.time() - start_total
-#    end_total, unit = print_execution_time(end_total)
+    return data

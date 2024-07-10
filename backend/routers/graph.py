@@ -16,6 +16,7 @@ async def graph_endpoint(request: Request):
     return {
         "nodes": data.get("nodes"),
         "edges": data.get("edges"),
+        "edges_blocked_links": data.get("edges_blocked_links"),
         "elapsed_time": {
             "value": end_total,
             "unit": unit,

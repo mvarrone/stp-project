@@ -10,6 +10,12 @@
             {{ errorMessage }}
         </div>
         <div v-else>
+            <div class="checkbox-container">
+                <label>
+                    <input type="checkbox" v-model="useFilteredEdges" @change="toggleEdges">
+                    Show blocked links
+                </label>
+            </div>
             <div id="mynetwork"></div>
         </div>
     </div>
@@ -18,62 +24,24 @@
 <script>
 import axios from "axios";
 import { Network } from 'vis-network';
-//import { Network } from 'vue-visjs';
+
 export default {
     name: "NetworkDiagram",
-    components: {
-        Network
-    },
     data() {
         return {
             nodes: [],
             edges: [],
+            edges_blocked_links: [],
             isLoading: false,
-            errorMessage: ''
+            errorMessage: '',
+            useFilteredEdges: false,
+            network: null,
         }
     },
     mounted() {
         this.getNodesAndEdges()
             .then(() => {
-                // Create and configure the network
-                var container = document.getElementById('mynetwork');
-                var data = {
-                    nodes: this.nodes,
-                    edges: this.edges
-                };
-                var options = {
-                    nodes: {
-                        font: {
-                            size: 18,
-                            color: "#000000",
-                        },
-                        borderWidth: 1,
-                        shadow: true,
-                    },
-                    edges: {
-                        smooth: {
-                            enabled: true,
-                            type: "cubicBezier",
-                            forceDirection: "vertical",
-                            roundness: 0.5
-                        },
-                    },
-                    interaction: {
-                        hover: true,
-                        tooltipDelay: 50,
-                    },
-                    layout: {
-                        hierarchical: {
-                            direction: "DU",
-                            sortMethod: 'directed' // hubsize, directed
-                        }
-                    },
-                    physics: {
-                        enabled: true,
-                        stabilization: false
-                    },
-                };
-                const network = new Network(container, data, options);
+                this.initNetwork();
             })
             .catch(err => {
                 console.log(err);
@@ -88,29 +56,87 @@ export default {
                 .then(response => {
                     this.nodes = response.data.nodes;
                     this.edges = response.data.edges;
+                    this.edges_blocked_links = response.data.edges_blocked_links;
+                    //console.log(response.data);
                 })
                 .catch(error => {
-                    console.error("An error occurred:", error);
+                    //console.error("An error occurred:", error);
                     this.errorMessage = `An error occurred. Please, try again. Message: ${error.message}. Code: ${error.code}`;
-                    this.isLoading = false;
                 })
                 .finally(() => {
                     this.isLoading = false;
                 });
+        },
+        initNetwork() {
+            const container = document.getElementById('mynetwork');
+            const data = {
+                nodes: this.nodes,
+                edges: this.edges
+            };
+            const options = this.getNetworkOptions();
+            this.updateNetwork(container, data, options);
+        },
+        updateNetwork(container, data, options) {
+            if (this.network) {
+                this.network.destroy();
+            }
+            this.network = new Network(container, data, options);
+        },
+        toggleEdges() {
+            const container = document.getElementById('mynetwork');
+            const data = {
+                nodes: this.nodes,
+                edges: this.useFilteredEdges ? this.edges_blocked_links : this.edges
+            };
+            const options = this.getNetworkOptions();
+            
+            // if (this.useFilteredEdges) {
+            //     console.log("Mostrando enlaces bloqueados");
+            // } else {
+            //     console.log("Mostrando enlaces normales");
+            // }
+            
+            this.updateNetwork(container, data, options);
+        },
+        getNetworkOptions() {
+            return {
+                nodes: {
+                    font: {
+                        size: 18,
+                        color: "#000000"
+                    },
+                    borderWidth: 1,
+                    shadow: true,
+                },
+                edges: {
+                    smooth: {
+                        enabled: true,
+                        type: "cubicBezier",
+                        forceDirection: "vertical",
+                        roundness: 0.5
+                    },
+                },
+                interaction: {
+                    hover: true,
+                    tooltipDelay: 50
+                },
+                layout: {
+                    hierarchical: {
+                        direction: "DU",
+                        sortMethod: 'directed'
+                    }
+                },
+                physics: {
+                    enabled: true,
+                    stabilization: false
+                }
+            };
         }
     },
-
 }
 </script>
 
 <style>
-/* #mynetwork {
-    width: auto;
-    height: 800px;
-    border: 1px solid lightgray;
-    background-color: #333;
-} */
-
 html,
 body {
     height: 100%;
@@ -118,11 +144,14 @@ body {
     padding: 0;
 }
 
+.checkbox-container {
+    margin: 10px;
+    color: #ffffff;
+}
+
 #mynetwork {
     width: 100%;
-    /* Set width to 100% to fill the container */
     height: 877px;
-    /* Set a specific height */
     border: 1px solid lightgray;
     background-color: #333;
 }
@@ -136,7 +165,6 @@ h2 {
     justify-content: center;
     align-items: center;
     height: 100vh;
-    /* Adjust as needed */
 }
 
 .loading-message {
@@ -162,7 +190,6 @@ h2 {
     0% {
         transform: rotate(0deg);
     }
-
     100% {
         transform: rotate(360deg);
     }
@@ -176,10 +203,6 @@ h2 {
     border: 1px solid #ff0000;
     border-radius: 4px;
 }
-
-/* .vis-tooltip {
-    position: absolute;
-} */
 
 .vis-tooltip {
     position: absolute;
