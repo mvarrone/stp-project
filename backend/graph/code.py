@@ -1,5 +1,6 @@
+import os
 import json
-import time
+from datetime import datetime
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pprint import pprint
@@ -12,6 +13,40 @@ from netmiko import (
 )
 from netmiko.utilities import get_structured_data
 
+def save_data(data) -> None:
+    # Get the current date and time
+    now = datetime.now()
+
+    # Format the date and time as a string
+    formatted_now = now.strftime("%Y-%m-%d_%H-%M-%S")
+
+    # Create the directory path
+    dir_path = f'./graph/saved_data/{formatted_now}/'
+
+    # Ensure the directory exists
+    os.makedirs(dir_path, exist_ok=True)
+
+    # Define the full paths for the JSON files
+    nodes_path = os.path.join(dir_path, 'nodes.json')
+    edges_path = os.path.join(dir_path, 'edges.json')
+    edges_blocked_links_path = os.path.join(dir_path, 'edges_blocked_links.json')
+
+    # Get nodes, edges, and edges_blocked_links data from input data
+    nodes = data.get("nodes")
+    edges = data.get("edges")
+    edges_blocked_links = data.get("edges_blocked_links")
+
+    # Save nodes data to the file
+    with open(nodes_path, 'w') as outfile:
+        json.dump(nodes, outfile)
+
+    # Save edges data to the file
+    with open(edges_path, 'w') as outfile:
+        json.dump(edges, outfile)
+
+    # Save edges_blocked_links data to the file
+    with open(edges_blocked_links_path, 'w') as outfile:
+        json.dump(edges_blocked_links, outfile)
 
 def print_updated_edge_information(edges_without_duplicated) -> None:
     #print(edges_without_duplicated)
@@ -498,7 +533,13 @@ def main():
     CREDENTIALS_FILE: str = "./device_credentials.json"
     devices: List[Dict[str, Any]] = load_credentials(CREDENTIALS_FILE)
     if not devices:
-        return
+        data = {
+            "nodes": [],
+            "edges": [],
+            "error": True,
+            "error_description": f"File {CREDENTIALS_FILE} has not been found"
+        }
+        return data 
 
     total_devices: int = len(devices)
     if total_devices == 1:
@@ -566,15 +607,23 @@ def main():
         data = {
             "nodes": [],
             "edges": [],
+            "error": True,
+            "error_description": f"No successful connections were made. {failed_count}/{total_devices} devices failed when trying to connect"
         }
-        return data
+        return data 
 
     # 5. Find root bridge
     print("\n5. Find root bridge")
     root_bridge_data = find_root_bridge(results)
     if not root_bridge_data:
         print("\nNo root bridge found. Ending here")
-        return
+        data = {
+            "nodes": [],
+            "edges": [],
+            "error": True,
+            "error_description": "No root bridge found"
+        }
+        return data 
     print(f"\nRoot bridge has been found:\n{root_bridge_data}")
 
     # 6. Build nodes
@@ -617,8 +666,15 @@ def main():
     data = {
         "nodes": nodes,
         "edges": edges_without_duplicated,
-        "edges_blocked_links": edges_without_duplicated_with_blocked_links
+        "edges_blocked_links": edges_without_duplicated_with_blocked_links,
+        "error": False,
+        "error_description": ""
     }
     print(data)
+
+    # 15. Save final data
+    print("\n15. Save final data")
+    save_data(data)
+    print("Done")
 
     return data

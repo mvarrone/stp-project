@@ -60,11 +60,11 @@ export default {
                     this.edges = response.data.edges;
                     this.edges_blocked_links = response.data.edges_blocked_links;
                     this.elapsed_time = response.data.elapsed_time;
-                    //console.log(response.data);
                 })
                 .catch(error => {
-                    //console.error("An error occurred:", error);
-                    this.errorMessage = `An error occurred. Please, try again. Message: ${error.message}. Code: ${error.code}`;
+                    this.error_description = error.response.data.detail;
+                    this.status_code = error.response.status;
+                    this.errorMessage = `${this.error_description}. Status code: ${this.status_code}`;
                 })
                 .finally(() => {
                     this.isLoading = false;
@@ -92,13 +92,7 @@ export default {
                 edges: this.useFilteredEdges ? this.edges_blocked_links : this.edges
             };
             const options = this.getNetworkOptions();
-            
-            // if (this.useFilteredEdges) {
-            //     console.log("Mostrando enlaces bloqueados");
-            // } else {
-            //     console.log("Mostrando enlaces normales");
-            // }
-            
+
             this.updateNetwork(container, data, options);
         },
         getNetworkOptions() {
@@ -150,6 +144,8 @@ body {
 .checkbox-container {
     margin: 10px;
     color: #ffffff;
+    display: flex;
+    align-items: center;
 }
 
 #mynetwork {
@@ -193,6 +189,7 @@ h2 {
     0% {
         transform: rotate(0deg);
     }
+
     100% {
         transform: rotate(360deg);
     }
@@ -222,11 +219,6 @@ h2 {
     pointer-events: none;
     transition: opacity 0.3s ease;
     opacity: 1;
-}
-
-.checkbox-container {
-    display: flex;
-    align-items: center;
 }
 
 .elapsed-time {
