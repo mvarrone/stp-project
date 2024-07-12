@@ -669,7 +669,7 @@ def main():
     data = {
         "nodes": nodes,
         "edges": edges_without_duplicated,
-        "edges_blocked_links": edges_without_duplicated_with_blocked_links,
+        "edges_with_blocked_links": edges_without_duplicated_with_blocked_links,
         "error": False,
         "error_description": ""
     }

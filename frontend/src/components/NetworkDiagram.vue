@@ -32,7 +32,7 @@ export default {
         return {
             nodes: [],
             edges: [],
-            edges_blocked_links: [],
+            edges_with_blocked_links: [],
             isLoading: false,
             errorMessage: '',
             useFilteredEdges: false,
@@ -59,7 +59,7 @@ export default {
                 .then(response => {
                     this.nodes = response.data.nodes;
                     this.edges = response.data.edges;
-                    this.edges_blocked_links = response.data.edges_blocked_links;
+                    this.edges_with_blocked_links = response.data.edges_with_blocked_links;
                     this.elapsed_time = response.data.elapsed_time;
                 })
                 .catch(error => {
@@ -90,7 +90,7 @@ export default {
             const container = document.getElementById('mynetwork');
             const data = {
                 nodes: this.nodes,
-                edges: this.useFilteredEdges ? this.edges_blocked_links : this.edges
+                edges: this.useFilteredEdges ? this.edges_with_blocked_links : this.edges
             };
             const options = this.getNetworkOptions();
 
