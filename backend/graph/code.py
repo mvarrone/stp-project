@@ -26,27 +26,18 @@ def save_data(data) -> None:
     # Ensure the directory exists
     os.makedirs(dir_path, exist_ok=True)
 
-    # Define the full paths for the JSON files
-    nodes_path = os.path.join(dir_path, 'nodes.json')
-    edges_path = os.path.join(dir_path, 'edges.json')
-    edges_blocked_links_path = os.path.join(dir_path, 'edges_blocked_links.json')
+    # Define the paths and corresponding data
+    paths_and_data = {
+        'nodes.json': data.get("nodes"),
+        'edges.json': data.get("edges"),
+        'edges_blocked_links.json': data.get("edges_blocked_links")
+    }
 
-    # Get nodes, edges, and edges_blocked_links data from input data
-    nodes = data.get("nodes")
-    edges = data.get("edges")
-    edges_blocked_links = data.get("edges_blocked_links")
-
-    # Save nodes data to the file
-    with open(nodes_path, 'w') as outfile:
-        json.dump(nodes, outfile)
-
-    # Save edges data to the file
-    with open(edges_path, 'w') as outfile:
-        json.dump(edges, outfile)
-
-    # Save edges_blocked_links data to the file
-    with open(edges_blocked_links_path, 'w') as outfile:
-        json.dump(edges_blocked_links, outfile)
+    # Save data to the files
+    for file_name, content in paths_and_data.items():
+        file_path = os.path.join(dir_path, file_name)
+        with open(file_path, 'w') as outfile:
+            json.dump(content, outfile)
 
 def print_updated_edge_information(edges_without_duplicated) -> None:
     #print(edges_without_duplicated)
@@ -92,8 +83,8 @@ def identify_blocked_links(results: List[Dict[str, Any]]) -> List[Dict[str, int]
         stp_output = result.get("stp_output_parsed", [])
         cdp_output = result.get("cdp_output_parsed", [])
 
-        # Step 1: Identify interfaces with Role=Altn
-        altn_interfaces = [entry for entry in stp_output if entry.get("role") == "Altn"]
+        # Step 1: Identify interfaces with Role=Alternate
+        altn_interfaces = [entry for entry in stp_output if entry.get("role") == "Alternate"]
         #print("\naltn_interfaces", altn_interfaces)
 
         for altn_interface in altn_interfaces:
@@ -401,6 +392,17 @@ def modify_stp_parsed_data(parsed_stp_output, device_type) -> List[Dict[str, str
             if 'interface' in entry:
                 entry['interface'] = entry['interface'].replace('Gi', 'G ')
 
+            if 'role' in entry:
+                entry['role'] = entry['role'].replace('Desg', 'Designated')
+
+            if 'role' in entry:
+                entry['role'] = entry['role'].replace('Altn', 'Alternate')
+
+            if 'status' in entry:
+                entry['status'] = entry['status'].replace('FWD', 'Forwarding')
+
+            if 'status' in entry:
+                entry['status'] = entry['status'].replace('BLK', 'Blocking')
         return parsed_stp_output
 
 
@@ -505,12 +507,13 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             # Assign a title to each device for being used in nodes later
             result["title"] = f"SVI: {device.get("host")} - Platform: {device.get("device_type")}"
             
-            # Assign a value of 9999 to each device for being used in nodes later
-            # Value of 9999: It indicates that the key level has not yet been determined
-            # It will be updated in the process_nodes function later
-            # All devices start having a value of 9999
-            # When root bridge is found, that device gets a value of 0
-            # When root bridge neighbor(s) is/are found, that/those device(s) will get a value of 1
+            # Assign a value of 9999 to each device. It will be updated in the process_nodes function later
+            # It indicates that the key level has not been determined yet
+            # How it works:
+            # 1. All devices start having a value of 9999
+            # 2. When root bridge is found, device gets an updated value of 0 for key level
+            # 3. When root bridge neighbor(s) is/are found, that/those device(s) will updated to a value of 1 for key level
+            # 4. Finally, every device is going to be updated to a value of 2, 3, 4,...etc
             result["level"] = 9999
 
             # Increase ID
@@ -648,8 +651,8 @@ def main():
     print("\n10. Print edge information")
     print_edge_information(edges, edges_with_names, switches, edges_without_duplicated, edges_without_duplicated_with_names)
 
-    # 11. Identify edges where exist blocked interfaces (Role = Altn)
-    print("\n11. Identify edges where exist blocked interfaces (Role = Altn)")
+    # 11. Identify edges where exist blocked interfaces (Role = Alternate)
+    print("\n11. Identify edges where exist blocked interfaces (Role = Alternate)")
     edges_to_be_deleted = identify_blocked_links(results)
     print("Edges identified:", edges_to_be_deleted)
 
