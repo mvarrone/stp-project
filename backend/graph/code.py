@@ -30,7 +30,7 @@ def save_data(data) -> None:
     paths_and_data = {
         'nodes.json': data.get("nodes"),
         'edges.json': data.get("edges"),
-        'edges_blocked_links.json': data.get("edges_blocked_links")
+        'edges_with_blocked_links.json': data.get("edges_with_blocked_links")
     }
 
     # Save data to the files
