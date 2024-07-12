@@ -13,15 +13,32 @@ from netmiko import (
 )
 from netmiko.utilities import get_structured_data
 
+
+def read_counter(COUNTER_FILE):
+    if not os.path.exists(COUNTER_FILE):
+        return 1
+    with open(COUNTER_FILE, 'r') as file:
+        return int(file.read().strip())
+
+def write_counter(counter, COUNTER_FILE):
+    with open(COUNTER_FILE, 'w') as file:
+        file.write(str(counter))
+
 def save_data(data) -> None:
+    # Read and update the counter
+    COUNTER_FILE = './graph/counter.txt'
+    counter = read_counter(COUNTER_FILE)
+    new_counter = counter + 1
+    write_counter(new_counter, COUNTER_FILE)
+    
     # Get the current date and time
     now = datetime.now()
 
     # Format the date and time as a string
     formatted_now = now.strftime("%Y-%m-%d_%H-%M-%S")
 
-    # Create the directory path
-    dir_path = f'./graph/saved_data/{formatted_now}/'
+    # Create the directory path with the counter
+    dir_path = f'./graph/saved_data/{counter:01d}-{formatted_now}/'
 
     # Ensure the directory exists
     os.makedirs(dir_path, exist_ok=True)
