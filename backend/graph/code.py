@@ -56,40 +56,52 @@ def save_data(data) -> None:
         with open(file_path, 'w') as outfile:
             json.dump(content, outfile)
 
+
 def print_updated_edge_information(edges_without_duplicated) -> None:
     #print(edges_without_duplicated)
     print("\nBetter way to show edges_without_duplicated:")
     for edge in edges_without_duplicated:
         print(edge)
 
-def remove_blocked_links(edges_to_be_deleted, edges_without_duplicated) -> List[Dict[str, int]]:
+
+def remove_blocked_links(edges_to_be_deleted: List[Dict[str, int]], edges_without_duplicated: List[Dict[str, int]]) -> List[Dict[str, int]]:
     m = len(edges_to_be_deleted)
     if m == 1:
-        print("We found that 1 edge must be deleted")
+        print("We found that 1 edge must be deleted and it is the following one:")
     else:
-        print(f"We found that {m} edges must be deleted")
+        print(f"We found that {m} edges must be deleted and those are:")
     
     print("edges_to_be_deleted: ", edges_to_be_deleted)
 
-    print(f"\nedges_without_duplicated: {len(edges_without_duplicated)} element(s)")
+    print("\nBefore eliminating edge(s)")
+    print(f"edges_without_duplicated: {len(edges_without_duplicated)} element(s)")
     print(edges_without_duplicated)
 
+    def normalize_edge(edge: Dict[str, int]) -> Dict[str, int]:
+        return {'from': edge['from'], 'to': edge['to']}
+
+    counter_number_of_removed_edges = 0
     for edge in edges_to_be_deleted:
         # Create the opposite edge dictionary
-        opposite_edge = {'from': edge.get("to"), 'to': edge.get("from")}
-        
-        # Try to remove the original edge if it exists
-        if edge in edges_without_duplicated:
-            edges_without_duplicated.remove(edge)
-        
-        # Try to remove the opposite edge if it exists
-        if opposite_edge in edges_without_duplicated:
-            edges_without_duplicated.remove(opposite_edge)
+        opposite_edge = normalize_edge({'from': edge.get("to"), 'to': edge.get("from")})
+
+        # Normalize and try to remove the original edge if it exists
+        normalized_edges = [normalize_edge(e) for e in edges_without_duplicated]
+        if normalize_edge(edge) in normalized_edges:
+            edges_without_duplicated.remove(next(e for e in edges_without_duplicated if normalize_edge(e) == normalize_edge(edge)))
+            counter_number_of_removed_edges = counter_number_of_removed_edges + 1
+
+        # Normalize and try to remove the opposite edge if it exists
+        if opposite_edge in normalized_edges:
+            edges_without_duplicated.remove(next(e for e in edges_without_duplicated if normalize_edge(e) == opposite_edge))
+            counter_number_of_removed_edges = counter_number_of_removed_edges + 1
 
     print("\nAfter eliminating edge(s)")
-    print(f"\nedges_without_duplicated: {len(edges_without_duplicated)} element(s)")
+    print(f"edges_without_duplicated: {len(edges_without_duplicated)} element(s)")
     print(edges_without_duplicated)
+    print(f"Amount of removed edges: {counter_number_of_removed_edges}")
     return edges_without_duplicated
+
 
 def identify_blocked_links(results: List[Dict[str, Any]]) -> List[Dict[str, int]]:
     edges_to_be_deleted = []
@@ -172,12 +184,15 @@ def process_edges(results) -> List[Dict[str, Any]]:
         switch_name = result.get("prompt")
         switch_id = result.get("id")
         cdp_data = result.get("cdp_output_parsed")
+        print("cdp_data: ", cdp_data)
 
         switch = {'name': switch_name, 'id': switch_id}   
         switches.append(switch)
 
         for entry in cdp_data:
             neighbor_prompt = entry.get("neighbor")
+            local_interface = entry.get("local_interface")
+            neighbor_interface = entry.get("neighbor_interface")
             edge_with_name = {'from': switch_name, 'to': neighbor_prompt}
             edges_with_names.append(edge_with_name)
 
@@ -189,14 +204,15 @@ def process_edges(results) -> List[Dict[str, Any]]:
                     break
             
             if neighbor_id is not None:
-                edge = {'from': switch_id, 'to': neighbor_id}
+                title = f"{switch_name}: {local_interface} <-> {neighbor_prompt}: {neighbor_interface}"
+                edge = {'from': switch_id, 'to': neighbor_id, "title": title}
                 edges.append(edge)
 
                 # Create a tuple for the edge to check for duplicates
                 edge_tuple = tuple(sorted((switch_id, neighbor_id)))
                 if edge_tuple not in seen_edges:
                     seen_edges.add(edge_tuple)
-                    edge_wo = {'from': switch_id, 'to': neighbor_id}
+                    edge_wo = {'from': switch_id, 'to': neighbor_id, "title": title}
                     edges_without_duplicated.append(edge_wo)
                     edges_without_duplicated_with_blocked_links.append(edge_wo)
 
