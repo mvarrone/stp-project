@@ -470,7 +470,7 @@ def checks_all_prompts_are_different(results) -> bool:
 
     if duplicates:
         error_checking_prompts = True
-        print("TEST: FAILED: Duplicated 'prompt' values have been found. Ending here")
+        print("TEST: FAILED. Duplicated 'prompt' values have been found. Ending here")
         for result in results:
             prompt = result.get('prompt')
             print(f"Prompt: {prompt}")
@@ -573,7 +573,7 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             # Assign a title to each device for being used in nodes later
             result["title"] = f"SVI: {device.get("host")} - Platform: {device.get("device_type")}"
             
-            # Assign a value of 9999 to each device. It will be updated in the process_nodes function later
+            # Assign a value of 9999 as a placeholder to each device. It will be updated in the process_nodes function later
             result["level"] = 9999
 
             # Increase ID
