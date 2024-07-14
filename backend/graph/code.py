@@ -470,12 +470,12 @@ def checks_all_prompts_are_different(results) -> bool:
 
     if duplicates:
         error = True
-        print("Se encontraron valores 'prompt' duplicados")
+        print("TEST: FAILED: Duplicated 'prompt' values have been found. Ending here")
         for result in results:
             prompt = result.get('prompt')
             print(f"Prompt: {prompt}")
     else:
-        print("TEST: PASSED. Todos los valores 'prompt' son distintos.")
+        print("TEST: PASSED. All 'prompt' values are different")
 
     return error
 
@@ -631,7 +631,6 @@ def main():
     
     # 3. Some checks before continuing
     print("\n3. Some checks before continuing")
-
     error = checks_all_prompts_are_different(results)
     if error:
         data = {
