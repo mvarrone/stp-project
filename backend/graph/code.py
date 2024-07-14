@@ -457,9 +457,9 @@ def modify_cdp_parsed_data(parsed_cdp_output, device_type) -> List[Dict[str, str
         return parsed_cdp_output
 
 def checks_all_prompts_are_different(results) -> bool:
+    error_checking_prompts = False
     prompts_seen = set()
     duplicates = []
-    error = False
 
     for index, dictionary in enumerate(results):
         prompt = dictionary.get('prompt')
@@ -469,7 +469,7 @@ def checks_all_prompts_are_different(results) -> bool:
             prompts_seen.add(prompt)
 
     if duplicates:
-        error = True
+        error_checking_prompts = True
         print("TEST: FAILED: Duplicated 'prompt' values have been found. Ending here")
         for result in results:
             prompt = result.get('prompt')
@@ -477,7 +477,7 @@ def checks_all_prompts_are_different(results) -> bool:
     else:
         print("TEST: PASSED. All 'prompt' values are different")
 
-    return error
+    return error_checking_prompts
 
 def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
     global connection_id
@@ -631,8 +631,8 @@ def main():
     
     # 3. Some checks before continuing
     print("\n3. Some checks before continuing")
-    error = checks_all_prompts_are_different(results)
-    if error:
+    error_checking_prompts = checks_all_prompts_are_different(results)
+    if error_checking_prompts:
         data = {
             "nodes": [],
             "edges": [],
