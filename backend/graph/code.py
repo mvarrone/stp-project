@@ -475,13 +475,20 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
         "level": "",
     }
 
+    # STP
     spanning_tree_command = device.get("spanning_tree_command", "show spanning-tree")
-    cdp_neighbors_command = device.get("cdp_neighbors_command", "show cdp neighbors")
+    stp_template_name = device.get("stp_template")
 
+    # CDP
+    cdp_neighbors_command = device.get("cdp_neighbors_command", "show cdp neighbors")
+    cdp_template_name = device.get("cdp_template")
+
+    # netmiko_device dictionary needs to have the correct arguments in order to use within ConnectHandler,
+    # so to fix it we needed to eliminate some key: value pairs from device dictionary
     netmiko_device = {
         k: v
         for k, v in device.items()
-        if k not in ["spanning_tree_command", "cdp_neighbors_command"]
+        if k not in ["spanning_tree_command", "cdp_neighbors_command", "stp_template", "cdp_template"]
     }
 
     try:
@@ -504,6 +511,7 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
                 raw_output=result.get("stp_output_raw"),
                 platform=connection.device_type,
                 command=spanning_tree_command,
+                template=f"my_own_ntc_templates/modified/{stp_template_name}"
             )
 
             # Post processing for STP parsed data 
@@ -522,6 +530,7 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
                 raw_output=result.get("cdp_output_raw"),
                 platform=connection.device_type,
                 command=cdp_neighbors_command,
+                template=f"my_own_ntc_templates/modified/{cdp_template_name}"
             )
 
             # Post processing for CDP parsed data 
@@ -647,6 +656,16 @@ def main():
             "error_description": f"No successful connections were made. {failed_count}/{total_devices} devices failed when trying to connect"
         }
         return data 
+
+    # To be eliminated
+    data = {
+        "nodes": [],
+        "edges": [],
+        "error": True,
+        "error_description": "Error for testing only"
+    }
+    return data
+    # To be eliminated
 
     # 5. Find root bridge
     print("\n5. Find root bridge")
