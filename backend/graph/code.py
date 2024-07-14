@@ -574,12 +574,6 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             result["title"] = f"SVI: {device.get("host")} - Platform: {device.get("device_type")}"
             
             # Assign a value of 9999 to each device. It will be updated in the process_nodes function later
-            # It indicates that the key level has not been determined yet
-            # How it works:
-            # 1. All devices start having a value of 9999
-            # 2. When root bridge is found, device gets an updated value of 0 for key level
-            # 3. When root bridge neighbor(s) is/are found, that/those device(s) will updated to a value of 1 for key level
-            # 4. Finally, every device is going to be updated to a value of 2, 3, 4,...etc
             result["level"] = 9999
 
             # Increase ID
