@@ -456,6 +456,29 @@ def modify_cdp_parsed_data(parsed_cdp_output, device_type) -> List[Dict[str, str
 
         return parsed_cdp_output
 
+def checks_all_prompts_are_different(results) -> bool:
+    prompts_seen = set()
+    duplicates = []
+    error = False
+
+    for index, dictionary in enumerate(results):
+        prompt = dictionary.get('prompt')
+        if prompt in prompts_seen:
+            duplicates.append((index, prompt))
+        else:
+            prompts_seen.add(prompt)
+
+    if duplicates:
+        error = True
+        print("Se encontraron valores 'prompt' duplicados")
+        for result in results:
+            prompt = result.get('prompt')
+            print(f"Prompt: {prompt}")
+    else:
+        print("TEST: PASSED. Todos los valores 'prompt' son distintos.")
+
+    return error
+
 def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
     global connection_id
 
@@ -604,10 +627,23 @@ def main():
 
     print("DEBUG:")
     for result in results:
-        pprint(result) 
+        pprint(result)
+    
+    # 3. Some checks before continuing
+    print("\n3. Some checks before continuing")
 
-    # 3. Count successes and failures
-    print("\n3. Count successes and failures")
+    error = checks_all_prompts_are_different(results)
+    if error:
+        data = {
+            "nodes": [],
+            "edges": [],
+            "error": True,
+            "error_description": "There are switches with the same prompt"
+        }
+        return data
+
+    # 4. Count successes and failures
+    print("\n4. Count successes and failures")
     connection_counter: Counter = Counter()
     successful_connections: List[str] = []
     failed_connections: Dict[str, List[str]] = {
@@ -625,8 +661,8 @@ def main():
             failed_connections[status].append(device_info)
     print("Done")
 
-    # 4. Print results
-    print("\n4. Print results\n\nSummary of connections:")
+    # 5. Print results
+    print("\n5. Print results\n\nSummary of connections:")
     total_devices = len(devices)
     successful_count = connection_counter.get("success", 0)
     successful_percentage = 100 * successful_count / total_devices
@@ -667,8 +703,8 @@ def main():
     return data
     # To be eliminated
 
-    # 5. Find root bridge
-    print("\n5. Find root bridge")
+    # 6. Find root bridge
+    print("\n6. Find root bridge")
     root_bridge_data = find_root_bridge(results)
     if not root_bridge_data:
         print("\nNo root bridge found. Ending here")
@@ -681,43 +717,43 @@ def main():
         return data 
     print(f"\nRoot bridge has been found:\n{root_bridge_data}")
 
-    # 6. Build nodes
-    print("\n6. Build nodes")
+    # 7. Build nodes
+    print("\n7. Build nodes")
     nodes = process_nodes(root_bridge_data, results)
     print("Done")
 
-    # 7. Print node information
-    print("\n7. Print node information")
+    # 8. Print node information
+    print("\n8. Print node information")
     print_node_information(nodes)
 
-    # 8. Print node tree structure
-    print("\n8. Print node tree structure")
+    # 9. Print node tree structure
+    print("\n9. Print node tree structure")
     print_node_structure(nodes)
 
-    # 9. Build edges
-    print("\n9. Build edges")
+    # 10. Build edges
+    print("\n10. Build edges")
     edges, edges_with_names, switches, edges_without_duplicated, edges_without_duplicated_with_names, edges_without_duplicated_with_blocked_links = process_edges(results)
     print("Done")
 
-    # 10. Print edge information
-    print("\n10. Print edge information")
+    # 11. Print edge information
+    print("\n11. Print edge information")
     print_edge_information(edges, edges_with_names, switches, edges_without_duplicated, edges_without_duplicated_with_names)
 
-    # 11. Identify edges where exist blocked interfaces (Role = Alternate)
-    print("\n11. Identify edges where exist blocked interfaces (Role = Alternate)")
+    # 12. Identify edges where exist blocked interfaces (Role = Alternate)
+    print("\n12. Identify edges where exist blocked interfaces (Role = Alternate)")
     edges_to_be_deleted = identify_blocked_links(results)
     print("Edges identified:", edges_to_be_deleted)
 
-    # 12. Remove edge(s)
-    print("\n12. Remove edge(s)")
+    # 13. Remove edge(s)
+    print("\n13. Remove edge(s)")
     edges_without_duplicated = remove_blocked_links(edges_to_be_deleted, edges_without_duplicated)
     
-    # 13. Print updated edge information
-    print("\n13. Print updated edge information")
+    # 14. Print updated edge information
+    print("\n14. Print updated edge information")
     print_updated_edge_information(edges_without_duplicated)
 
-    # 14. Print final data
-    print("\n14. Print final data\n") 
+    # 15. Print final data
+    print("\n15. Print final data\n") 
     data = {
         "nodes": nodes,
         "edges": edges_without_duplicated,
@@ -727,8 +763,8 @@ def main():
     }
     print(data)
 
-    # 15. Save final data
-    print("\n15. Save final data")
+    # 16. Save final data
+    print("\n16. Save final data")
     save_data(data)
     print("Done")
 
