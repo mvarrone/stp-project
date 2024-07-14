@@ -184,7 +184,7 @@ def process_edges(results) -> List[Dict[str, Any]]:
         switch_name = result.get("prompt")
         switch_id = result.get("id")
         cdp_data = result.get("cdp_output_parsed")
-        print("cdp_data: ", cdp_data)
+        #print("cdp_data: ", cdp_data)
 
         switch = {'name': switch_name, 'id': switch_id}   
         switches.append(switch)
@@ -226,6 +226,13 @@ def print_node_information(nodes) -> None:
     print("\nBetter way to show nodes:")
     for node in nodes:
         print(node)
+
+def update_title_with_level_info(nodes) -> List[Dict[str, Any]]:
+    for node in nodes:
+        level = node.get("level")        
+        title = node.get("title")        
+        node["title"] = title + f" - Level: {level}"
+    return nodes
 
 def print_node_structure(nodes) -> None:
     # Sort nodes by key 'level'
@@ -436,6 +443,9 @@ def modify_stp_parsed_data(parsed_stp_output, device_type) -> List[Dict[str, str
 
             if 'status' in entry:
                 entry['status'] = entry['status'].replace('BLK', 'Blocking')
+
+            if 'type' in entry:
+                entry['type'] = entry['type'].replace('Shr ', 'Shr')
         return parsed_stp_output
 
 
@@ -571,7 +581,7 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             result["label"] = result.get("prompt")
 
             # Assign a title to each device for being used in nodes later
-            result["title"] = f"SVI: {device.get("host")} - Platform: {device.get("device_type")}"
+            result["title"] = f"Mgmt IP address: {device.get("host")} - OS: {device.get("device_type")}"
             
             # Assign a value of 9999 as a placeholder to each device. It will be updated in the process_nodes function later
             result["level"] = 9999
@@ -687,16 +697,6 @@ def main():
         }
         return data 
 
-    # To be eliminated
-    data = {
-        "nodes": [],
-        "edges": [],
-        "error": True,
-        "error_description": "Error for testing only"
-    }
-    return data
-    # To be eliminated
-
     # 6. Find root bridge
     print("\n6. Find root bridge")
     root_bridge_data = find_root_bridge(results)
@@ -714,6 +714,11 @@ def main():
     # 7. Build nodes
     print("\n7. Build nodes")
     nodes = process_nodes(root_bridge_data, results)
+    print("Done")
+
+    # 7a. Update each node title with level information
+    print("\n7a. Update each node title with level information")
+    nodes = update_title_with_level_info(nodes)
     print("Done")
 
     # 8. Print node information

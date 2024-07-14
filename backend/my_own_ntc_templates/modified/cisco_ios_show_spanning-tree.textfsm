@@ -1,4 +1,5 @@
 Value Filldown VLAN_ID (\d+)
+Value Filldown PROTOCOL (\w+)
 Value Required INTERFACE (\S+)
 Value ROLE (\w+)
 Value STATUS (\w+)
@@ -9,6 +10,7 @@ Value TYPE (.*)
 
 Start
   ^VLAN(0*)?${VLAN_ID}
+  ^\s+Spanning tree enabled protocol ${PROTOCOL}
   ^${INTERFACE}\s+${ROLE}\s+${STATUS}\s+${COST}\s+${PORT_PRIORITY}.${PORT_ID}\s+${TYPE} -> Record
   # Capture time-stamp if vty line has command time-stamping turned on
   ^Load\s+for\s+
