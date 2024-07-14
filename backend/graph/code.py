@@ -508,10 +508,11 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
 
     # netmiko_device dictionary needs to have the correct arguments in order to use within ConnectHandler,
     # so to fix it we needed to eliminate some key: value pairs from device dictionary
+    list_of_keys_to_delete = ["spanning_tree_command", "cdp_neighbors_command", "stp_template", "cdp_template"]
     netmiko_device = {
         k: v
         for k, v in device.items()
-        if k not in ["spanning_tree_command", "cdp_neighbors_command", "stp_template", "cdp_template"]
+        if k not in list_of_keys_to_delete
     }
 
     try:
