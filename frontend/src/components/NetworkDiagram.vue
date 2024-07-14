@@ -33,6 +33,7 @@ export default {
             nodes: [],
             edges: [],
             edges_with_blocked_links: [],
+            results: [],
             isLoading: false,
             errorMessage: '',
             useFilteredEdges: false,
@@ -61,6 +62,8 @@ export default {
                     this.edges = response.data.edges;
                     this.edges_with_blocked_links = response.data.edges_with_blocked_links;
                     this.elapsed_time = response.data.elapsed_time;
+                    this.results = response.data.results;
+                    console.log("results: ", response.data.results);
                 })
                 .catch(error => {
                     this.error_description = error.response.data.detail;
@@ -85,6 +88,31 @@ export default {
                 this.network.destroy();
             }
             this.network = new Network(container, data, options);
+
+            // Save a reference to 'this' for use it within the callback function
+            const self = this;
+
+            // onClick event handler
+            this.network.on("click", function (params) {
+                const selected_node = this.getNodeAt(params.pointer.DOM);
+                if (selected_node != null) {
+                    console.log("Click event -> node id: " + selected_node);
+                    
+                    // Look for the selected node within results variable
+                    const selectedResult = self.results.find(result => result.id === selected_node);
+                    
+                    if (selectedResult) {
+                        console.log("device:", selectedResult.device);
+                        console.log("device_type:", selectedResult.device_type);
+                        console.log("label:", selectedResult.label);
+                        console.log("level:", selectedResult.level);
+                        // Aquí puedes hacer lo que necesites con selectedResult.device y selectedResult.label
+                    } else {
+                        console.log("No se encontró información para el nodo seleccionado");
+                    }
+                }
+            });
+
         },
         toggleEdges() {
             const container = document.getElementById('mynetwork');

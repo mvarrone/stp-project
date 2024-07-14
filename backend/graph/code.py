@@ -631,7 +631,7 @@ def main():
         for future in as_completed(future_to_device):
             results.append(future.result())
 
-    print("DEBUG:")
+    print("A - DEBUG:")
     for result in results:
         pprint(result)
     
@@ -758,6 +758,7 @@ def main():
         "nodes": nodes,
         "edges": edges_without_duplicated,
         "edges_with_blocked_links": edges_without_duplicated_with_blocked_links,
+        "results": results,
         "error": False,
         "error_description": ""
     }
