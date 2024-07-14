@@ -112,7 +112,7 @@ export default {
                         type: "cubicBezier",
                         forceDirection: "vertical",
                         roundness: 0.5
-                    },
+                    }
                 },
                 interaction: {
                     hover: true,

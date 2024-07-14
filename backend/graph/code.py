@@ -193,6 +193,7 @@ def process_edges(results) -> List[Dict[str, Any]]:
             neighbor_prompt = entry.get("neighbor")
             local_interface = entry.get("local_interface")
             neighbor_interface = entry.get("neighbor_interface")
+
             edge_with_name = {'from': switch_name, 'to': neighbor_prompt}
             edges_with_names.append(edge_with_name)
 
