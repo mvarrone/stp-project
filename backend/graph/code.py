@@ -474,10 +474,11 @@ def checks_all_prompts_are_different(results) -> bool:
 
     for index, dictionary in enumerate(results):
         prompt = dictionary.get('prompt')
-        if prompt in prompts_seen:
-            duplicates.append((index, prompt))
-        else:
-            prompts_seen.add(prompt)
+        if prompt:
+            if prompt in prompts_seen:
+                duplicates.append((index, prompt))
+            else:
+                prompts_seen.add(prompt)
 
     if duplicates:
         error_checking_prompts = True
