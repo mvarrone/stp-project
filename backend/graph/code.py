@@ -504,6 +504,8 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
         "stp_output_parsed": "",
         "cdp_output_raw": "",
         "cdp_output_parsed": "",
+        "version_output_raw": "",
+        "version_output_parsed": "",
         "id": "",
         "label": "",
         "title": "",
@@ -574,6 +576,23 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
 
             # Assign post processed data to dictionary
             result["cdp_output_parsed"] = parsed_cdp_output
+
+            # Version
+
+            # Get raw version data
+            result["version_output_raw"] = connection.send_command(
+                command_string="show version"
+            )
+
+            # Parse version data locally
+            parsed_cdp_output = get_structured_data(
+                raw_output=result.get("version_output_raw"),
+                platform=connection.device_type,
+                command="show version"
+            )
+
+            # Assign post processed data to dictionary
+            result["version_output_parsed"] = parsed_cdp_output
 
             # Assign ID to each device for being used in nodes later
             result["id"] = connection_id

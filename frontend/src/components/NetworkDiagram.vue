@@ -6,8 +6,8 @@
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
-        <p><strong>Device:</strong> {{ selectedNodeDevice }}</p>
-        <p><strong>Device Type:</strong> {{ selectedNodeDeviceType }}</p>
+        <p><strong>Mgmt IP address:</strong> {{ selectedNodeDevice }}</p>
+        <p><strong>Platform:</strong> {{ selectedNodeDeviceType }}</p>
         <p><strong>Level:</strong> {{ selectedNodeLevel }}</p>
     </div>
     </div>
