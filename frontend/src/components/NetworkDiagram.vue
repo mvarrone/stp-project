@@ -17,6 +17,19 @@
                 </label>
                 <span class="elapsed-time">Elapsed time: {{ elapsed_time.value }} {{ elapsed_time.unit }}</span>
             </div>
+
+            <!-- <b-sidebar id="node-info-sidebar" title="Node Information" right shadow>
+                <div class="px-3 py-2">
+                    <p v-if="selectedNode">
+                        <strong>Device:</strong> {{ selectedNode.device }}<br>
+                        <strong>Device Type:</strong> {{ selectedNode.device_type }}<br>
+                        <strong>Label:</strong> {{ selectedNode.label }}<br>
+                        <strong>Level:</strong> {{ selectedNode.level }}
+                    </p>
+                    <p v-else>No node selected</p>
+                </div>
+            </b-sidebar> -->
+
             <div id="mynetwork"></div>
         </div>
     </div>
@@ -25,9 +38,13 @@
 <script>
 import axios from "axios";
 import { Network } from 'vis-network';
+//import { BSidebar } from 'bootstrap-vue'
 
 export default {
     name: "NetworkDiagram",
+    // components: {
+    //     BSidebar
+    // },
     data() {
         return {
             nodes: [],
@@ -38,7 +55,8 @@ export default {
             errorMessage: '',
             useFilteredEdges: false,
             network: null,
-            elapsed_time: 0
+            elapsed_time: 0,
+            selectedNode: null,
         }
     },
     mounted() {
@@ -106,9 +124,13 @@ export default {
                         console.log("device_type:", selectedResult.device_type);
                         console.log("label:", selectedResult.label);
                         console.log("level:", selectedResult.level);
+                        
                         // Aquí puedes hacer lo que necesites con selectedResult.device y selectedResult.label
+                        self.selectedNode = selectedResult;
+                        self.$root.$emit('bv::toggle::sidebar', 'node-info-sidebar');
                     } else {
                         console.log("No se encontró información para el nodo seleccionado");
+                        self.selectedNode = null;
                     }
                 }
             });
@@ -253,5 +275,15 @@ h2 {
 .elapsed-time {
     margin-left: 10px;
     font-size: 14px;
+}
+
+.b-sidebar {
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+.b-sidebar-header {
+    background-color: #e9ecef;
+    border-bottom: 1px solid #dee2e6;
 }
 </style>
