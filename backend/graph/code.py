@@ -293,7 +293,7 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
                         "title": result.get("title")
                     }
                     nodes.append(node)
-                    result["level"] = 1 # Update results dictionary changing from 9999 to 1 for root bridge neighbors level value
+                    result["level"] = 1 # Update results dictionary changing from 9999 to 1 for root bridge neighbors
         return nodes
 
     nodes = calculate_nodes_for_level_1(nodes, root_bridge_data, results)
@@ -400,6 +400,7 @@ def get_prompt(connection, device_type) -> str:
         return prompt
 
     prompt = connection.find_prompt()
+
     return prompt
 
 
@@ -424,8 +425,18 @@ def load_credentials(CREDENTIALS_FILE: str) -> List[Dict[str, Any]]:
             devices = json.load(file)
     except FileNotFoundError:
         print(f"Error: File {CREDENTIALS_FILE} was not found")
+
         return devices
+    
     return devices
+
+def modify_version_parsed_data(parsed_version_output, device_type):
+    if device_type == "cisco_ios":
+        for entry in parsed_version_output:
+            if 'serial' in entry:
+                entry['serial'] = entry['serial'][0]
+
+    return parsed_version_output
 
 def modify_stp_parsed_data(parsed_stp_output, device_type) -> List[Dict[str, str]]:
     if device_type == "cisco_ios":
@@ -447,6 +458,7 @@ def modify_stp_parsed_data(parsed_stp_output, device_type) -> List[Dict[str, str
 
             if 'type' in entry:
                 entry['type'] = entry['type'].replace('Shr ', 'Shr')
+
         return parsed_stp_output
 
 
@@ -520,9 +532,13 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
     cdp_neighbors_command = device.get("cdp_neighbors_command", "show cdp neighbors")
     cdp_template_name = device.get("cdp_template")
 
+    # Version 
+    version_command = device.get("version_command", "show version")
+    version_template_name = device.get("version_template")
+
     # netmiko_device dictionary needs to have the correct arguments in order to use within ConnectHandler,
     # so to fix it we needed to eliminate some key: value pairs from device dictionary
-    list_of_keys_to_delete = ["spanning_tree_command", "cdp_neighbors_command", "stp_template", "cdp_template"]
+    list_of_keys_to_delete = ["spanning_tree_command", "cdp_neighbors_command", "version_command", "stp_template", "cdp_template", "version_template"]
     netmiko_device = {
         k: v
         for k, v in device.items()
@@ -577,22 +593,24 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             # Assign post processed data to dictionary
             result["cdp_output_parsed"] = parsed_cdp_output
 
-            # Version
-
             # Get raw version data
             result["version_output_raw"] = connection.send_command(
-                command_string="show version"
+                command_string=version_command
             )
 
             # Parse version data locally
-            parsed_cdp_output = get_structured_data(
+            parsed_version_output = get_structured_data(
                 raw_output=result.get("version_output_raw"),
                 platform=connection.device_type,
-                command="show version"
+                command=version_command,
+                template=f"my_own_ntc_templates/modified/{version_template_name}"
             )
 
+            # Post processing for Version parsed data 
+            parsed_version_output = modify_version_parsed_data(parsed_version_output, device_type)
+
             # Assign post processed data to dictionary
-            result["version_output_parsed"] = parsed_cdp_output
+            result["version_output_parsed"] = parsed_version_output
 
             # Assign ID to each device for being used in nodes later
             result["id"] = connection_id
@@ -651,7 +669,7 @@ def main():
         for future in as_completed(future_to_device):
             results.append(future.result())
 
-    print("A - DEBUG:")
+    print("DEBUG:")
     for result in results:
         pprint(result)
     
