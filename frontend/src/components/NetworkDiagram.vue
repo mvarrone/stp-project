@@ -1,45 +1,45 @@
 <template>
-<div>
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
-        <div class="offcanvas-header">
-            <div class="header-content">
-                <img :src="`./src/components/icons/${selectedNodeDeviceType}.png`" alt="Icon" class="sidebar-icon">
-                <h5 class="offcanvas-title" id="offcanvasRightLabel">{{ selectedNodeLabel }}</h5>
+    <div>
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
+            <div class="offcanvas-header">
+                <div class="header-content">
+                    <img :src="`./src/components/icons/${selectedNodeDeviceType}.png`" alt="Icon" class="sidebar-icon">
+                    <h5 class="offcanvas-title" id="offcanvasRightLabel">{{ selectedNodeLabel }}</h5>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            <div class="offcanvas-body">
+                <p><strong>Mgmt IP address:</strong> {{ selectedNodeDevice }}</p>
+                <p><strong>Platform:</strong> {{ selectedNodeDeviceType }}</p>
+                <p><strong>Level:</strong> {{ selectedNodeLevel }}</p>
+                <p><strong>Version:</strong> {{ selectedNodeVersion }}</p>
+                <p><strong>Uptime:</strong> {{ selectedNodeUptime }}</p>
+                <p><strong>Serial:</strong> {{ selectedNodeSerial }}</p>
+            </div>
         </div>
-        <div class="offcanvas-body">
-            <p><strong>Mgmt IP address:</strong> {{ selectedNodeDevice }}</p>
-            <p><strong>Platform:</strong> {{ selectedNodeDeviceType }}</p>
-            <p><strong>Level:</strong> {{ selectedNodeLevel }}</p>
-            <p><strong>Version:</strong> {{ selectedNodeVersion }}</p>
-            <p><strong>Uptime:</strong> {{ selectedNodeUptime }}</p>
-            <p><strong>Serial:</strong> {{ selectedNodeSerial }}</p>
-        </div>
-    </div>
-    <div v-if="isLoading" class="loading-container">
-        <div class="loading-message">
-            <span class="loading-spinner"></span>
-            Loading...
-        </div>
-    </div>
-    <div v-else>
-        <div v-if="errorMessage" class="error-message">
-            {{ errorMessage }}
+        <div v-if="isLoading" class="loading-container">
+            <div class="loading-message">
+                <span class="loading-spinner"></span>
+                Loading...
+            </div>
         </div>
         <div v-else>
-            <div class="checkbox-container">
-                <label>
-                    <input type="checkbox" v-model="useFilteredEdges" @change="toggleEdges">
-                    Show blocked links
-                </label>
-                &nbsp;&nbsp;&nbsp;
-                <span class="elapsed-time">Elapsed time: {{ elapsed_time.value }} {{ elapsed_time.unit }}</span>
+            <div v-if="errorMessage" class="error-message">
+                {{ errorMessage }}
             </div>
-            <div id="mynetwork"></div>
+            <div v-else>
+                <div class="checkbox-container">
+                    <label>
+                        <input type="checkbox" v-model="useFilteredEdges" @change="toggleEdges">
+                        Show blocked links
+                    </label>
+                    &nbsp;&nbsp;&nbsp;
+                    <span class="elapsed-time">Elapsed time: {{ elapsed_time.value }} {{ elapsed_time.unit }}</span>
+                </div>
+                <div id="mynetwork"></div>
+            </div>
         </div>
     </div>
-</div>
 </template>
 
 <script>

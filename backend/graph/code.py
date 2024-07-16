@@ -56,6 +56,27 @@ def save_data(data) -> None:
         with open(file_path, 'w') as outfile:
             json.dump(content, outfile)
 
+def select_specific_data(results) -> List[Dict[str, Any]]:
+    filtered_results = []
+
+    for result in results:
+        device = result.get('device')
+        device_type = result.get('device_type')
+        id = result.get('id')
+        label = result.get('label')
+        level = result.get('level')
+        version_output_parsed = result.get('version_output_parsed')
+
+        filtered_results.append({
+            'device': device,
+            'device_type': device_type,
+            'id': id,
+            'label': label,
+            'level': level,
+            'version_output_parsed': version_output_parsed
+        })
+
+    return filtered_results
 
 def print_updated_edge_information(edges_without_duplicated) -> None:
     #print(edges_without_duplicated)
@@ -790,20 +811,25 @@ def main():
     print("\n14. Print updated edge information")
     print_updated_edge_information(edges_without_duplicated)
 
-    # 15. Print final data
-    print("\n15. Print final data\n") 
+    # 15. Select specific data to be sent
+    print("\n15. Select specific data to be sent\n")
+    filtered_results = select_specific_data(results)
+    #print(filtered_results)
+
+    # 16. Print final data
+    print("\n16. Print final data\n") 
     data = {
         "nodes": nodes,
         "edges": edges_without_duplicated,
         "edges_with_blocked_links": edges_without_duplicated_with_blocked_links,
-        "results": results,
+        "results": filtered_results,
         "error": False,
         "error_description": ""
     }
     print(data)
 
-    # 16. Save final data
-    print("\n16. Save final data")
+    # 17. Save final data
+    print("\n17. Save final data")
     save_data(data)
     print("Done")
 
