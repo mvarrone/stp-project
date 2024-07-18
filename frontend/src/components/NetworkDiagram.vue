@@ -4,17 +4,25 @@
             <div class="offcanvas-header">
                 <div class="header-content">
                     <img :src="`./src/components/icons/${selectedNodeDeviceType}.png`" alt="Icon" class="sidebar-icon">
-                    <h5 class="offcanvas-title" id="offcanvasRightLabel">{{ selectedNodeLabel }}</h5>
+                    <h5 class="offcanvas-title" id="offcanvasRightLabel">{{ sidebarTitle }}</h5>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body">
-                <p><strong>Mgmt IP address:</strong> {{ selectedNodeDevice }}</p>
-                <p><strong>Platform:</strong> {{ selectedNodeDeviceType }}</p>
-                <p><strong>Level:</strong> {{ selectedNodeLevel }}</p>
-                <p><strong>Version:</strong> {{ selectedNodeVersion }}</p>
-                <p><strong>Uptime:</strong> {{ selectedNodeUptime }}</p>
-                <p><strong>Serial:</strong> {{ selectedNodeSerial }}</p>
+                <div v-if="selectedElementType === 'node'">
+                    <p><strong>Mgmt IP address:</strong> {{ selectedNodeDevice }}</p>
+                    <p><strong>Platform:</strong> {{ selectedNodeDeviceType }}</p>
+                    <p><strong>Level:</strong> {{ selectedNodeLevel }}</p>
+                    <p><strong>Version:</strong> {{ selectedNodeVersion }}</p>
+                    <p><strong>Uptime:</strong> {{ selectedNodeUptime }}</p>
+                    <p><strong>Serial:</strong> {{ selectedNodeSerial }}</p>
+                </div>
+                <div v-else-if="selectedElementType === 'edge'">
+                    <!-- <p><strong>From:</strong> {{ selectedEdgeFrom }}</p> -->
+                    <!-- <p><strong>To:</strong> {{ selectedEdgeTo }}</p> -->
+                    <!-- <p><strong>Title:</strong> {{ selectedEdgeTitle }}</p> -->
+                    <p>{{ selectedEdgeTitle }}</p>
+                </div>
             </div>
         </div>
         <div v-if="isLoading" class="loading-container">
@@ -63,13 +71,17 @@ export default {
             useFilteredEdges: false,
             network: null,
             elapsed_time: 0,
-            selectedNodeLabel: '',
+            sidebarTitle: '',
             selectedNodeDevice: '',
             selectedNodeDeviceType: '',
             selectedNodeLevel: '',
             selectedNodeVersion: '',
             selectedNodeUptime: '',
-            selectedNodeSerial: ''
+            selectedNodeSerial: '',
+            selectedElementType: '',
+            selectedEdgeFrom: '',
+            selectedEdgeTo: '',
+            selectedEdgeTitle: ''
         }
     },
     mounted() {
@@ -91,6 +103,7 @@ export default {
                 .then(response => {
                     this.nodes = response.data.nodes;
                     this.edges = response.data.edges;
+                    console.log("edges: ", response.data.edges);
                     this.edges_with_blocked_links = response.data.edges_with_blocked_links;
                     this.elapsed_time = response.data.elapsed_time;
                     this.results = response.data.results;
@@ -126,21 +139,24 @@ export default {
             // onClick event handler
             this.network.on("click", function (params) {
                 const selected_node = this.getNodeAt(params.pointer.DOM);
+                const selected_edge = this.getEdgeAt(params.pointer.DOM);
                 if (selected_node != null) {
                     //console.log("Click event. node id: " + selected_node);
 
                     // Look for the selected node within results variable
-                    const selectedResult = self.results.find(result => result.id === selected_node);
+                    const selectedNodeResult = self.results.find(result => result.id === selected_node);
 
-                    if (selectedResult) {
+                    if (selectedNodeResult) {
                         // Save data to show in sidebar
-                        self.selectedNodeLabel = selectedResult.label;
-                        self.selectedNodeDevice = selectedResult.device;
-                        self.selectedNodeDeviceType = selectedResult.device_type;
-                        self.selectedNodeLevel = selectedResult.level;
-                        self.selectedNodeVersion = selectedResult.version_output_parsed[0].version;
-                        self.selectedNodeUptime = selectedResult.version_output_parsed[0].uptime;
-                        self.selectedNodeSerial = selectedResult.version_output_parsed[0].serial;
+                        self.sidebarTitle = selectedNodeResult.label;
+                        self.selectedElementType = 'node';
+
+                        self.selectedNodeDevice = selectedNodeResult.device;
+                        self.selectedNodeDeviceType = selectedNodeResult.device_type;
+                        self.selectedNodeLevel = selectedNodeResult.level;
+                        self.selectedNodeVersion = selectedNodeResult.version_output_parsed[0].version;
+                        self.selectedNodeUptime = selectedNodeResult.version_output_parsed[0].uptime;
+                        self.selectedNodeSerial = selectedNodeResult.version_output_parsed[0].serial;
 
                         // Show sidebar
                         const offcanvasElement = document.getElementById('offcanvasRight');
@@ -148,8 +164,31 @@ export default {
                         offcanvas.show();
 
                     } else {
-                        console.log("No se encontró información para el nodo seleccionado");
+                        console.log("No info found for the selected node");
                         self.selectedNode = null;
+                    }
+                } else if (selected_edge != null) {     
+                    // Look for the selected edge within edges variable
+                    const selectedEdgeResult = self.edges.find(edge => edge.id === selected_edge);
+
+                    if (selectedEdgeResult) {
+                        // Save data to show in sidebar
+                        self.sidebarTitle = 'Link information'
+                        self.selectedElementType = 'edge';
+
+                        self.selectedNodeDeviceType = "information"
+                        //self.selectedEdgeFrom = selectedEdgeResult.from;
+                        //self.selectedEdgeTo = selectedEdgeResult.to;
+                        self.selectedEdgeTitle = selectedEdgeResult.title;
+
+                        // Show sidebar
+                        const offcanvasElement = document.getElementById('offcanvasRight');
+                        const offcanvas = new bootstrap.Offcanvas(offcanvasElement);
+                        offcanvas.show();
+
+                    } else {
+                        console.log("No info found for the selected edge");
+                        self.selectedEdge = null;
                     }
                 }
             });

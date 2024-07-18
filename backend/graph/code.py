@@ -451,7 +451,7 @@ def load_credentials(CREDENTIALS_FILE: str) -> List[Dict[str, Any]]:
     
     return devices
 
-def modify_version_parsed_data(parsed_version_output, device_type):
+def modify_version_parsed_data(parsed_version_output, device_type) -> List[Dict[str, str]]:
     if device_type == "cisco_ios":
         for entry in parsed_version_output:
             if 'serial' in entry:
@@ -542,7 +542,7 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
         "id": "",
         "label": "",
         "title": "",
-        "level": "",
+        "level": ""
     }
 
     # STP
@@ -576,12 +576,13 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             # Get prompt for each device
             result["prompt"] = get_prompt(connection, device_type)
 
-            # Get raw STP data
+            ## STP
+            # 1. Get raw STP data
             result["stp_output_raw"] = connection.send_command(
                 command_string=spanning_tree_command
             )
 
-            # Parse STP data locally
+            # 2. Parse STP data locally
             parsed_stp_output = get_structured_data(
                 raw_output=result.get("stp_output_raw"),
                 platform=connection.device_type,
@@ -589,18 +590,19 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
                 template=f"my_own_ntc_templates/modified/{stp_template_name}"
             )
 
-            # Post processing for STP parsed data 
+            # 3. Post processing for STP parsed data 
             parsed_stp_output = modify_stp_parsed_data(parsed_stp_output, device_type)
 
-            # Assign post processed data to dictionary
+            # 4. Assign post processed data to dictionary
             result["stp_output_parsed"] = parsed_stp_output
 
-            # Get raw CDP data
+            ## CDP
+            # 1. Get raw CDP data
             result["cdp_output_raw"] = connection.send_command(
                 command_string=cdp_neighbors_command
             )
 
-            # Parse CDP data locally
+            # 2. Parse CDP data locally
             parsed_cdp_output = get_structured_data(
                 raw_output=result.get("cdp_output_raw"),
                 platform=connection.device_type,
@@ -608,18 +610,19 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
                 template=f"my_own_ntc_templates/modified/{cdp_template_name}"
             )
 
-            # Post processing for CDP parsed data 
+            # 3. Post processing for CDP parsed data 
             parsed_cdp_output = modify_cdp_parsed_data(parsed_cdp_output, device_type)
 
-            # Assign post processed data to dictionary
+            # 4. Assign post processed data to dictionary
             result["cdp_output_parsed"] = parsed_cdp_output
 
-            # Get raw version data
+            ## Version
+            # 1. Get raw version data
             result["version_output_raw"] = connection.send_command(
                 command_string=version_command
             )
 
-            # Parse version data locally
+            # 2. Parse version data locally
             parsed_version_output = get_structured_data(
                 raw_output=result.get("version_output_raw"),
                 platform=connection.device_type,
@@ -627,12 +630,13 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
                 template=f"my_own_ntc_templates/modified/{version_template_name}"
             )
 
-            # Post processing for Version parsed data 
+            # 3. Post processing for Version parsed data 
             parsed_version_output = modify_version_parsed_data(parsed_version_output, device_type)
 
-            # Assign post processed data to dictionary
+            # 4. Assign post processed data to dictionary
             result["version_output_parsed"] = parsed_version_output
 
+            ## Others
             # Assign ID to each device for being used in nodes later
             result["id"] = connection_id
 
