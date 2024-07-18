@@ -18,9 +18,9 @@
                     <p><strong>Serial:</strong> {{ selectedNodeSerial }}</p>
                 </div>
                 <div v-else-if="selectedElementType === 'edge'">
-                    <!-- <p><strong>From:</strong> {{ selectedEdgeFrom }}</p> -->
-                    <!-- <p><strong>To:</strong> {{ selectedEdgeTo }}</p> -->
-                    <!-- <p><strong>Title:</strong> {{ selectedEdgeTitle }}</p> -->
+                    <!-- <p><strong>From:</strong> {{ selectedEdgeFrom }}</p>
+                    <p><strong>To:</strong> {{ selectedEdgeTo }}</p>
+                    <p><strong>Title:</strong> {{ selectedEdgeTitle }}</p> -->
                     <p>{{ selectedEdgeTitle }}</p>
                 </div>
             </div>
