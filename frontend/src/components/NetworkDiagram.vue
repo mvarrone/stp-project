@@ -103,11 +103,9 @@ export default {
                 .then(response => {
                     this.nodes = response.data.nodes;
                     this.edges = response.data.edges;
-                    console.log("edges: ", response.data.edges);
                     this.edges_with_blocked_links = response.data.edges_with_blocked_links;
                     this.elapsed_time = response.data.elapsed_time;
                     this.results = response.data.results;
-                    //console.log("results: ", response.data.results);
                 })
                 .catch(error => {
                     this.error_description = error.response.data.detail;
