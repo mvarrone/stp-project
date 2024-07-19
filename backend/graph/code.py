@@ -56,6 +56,30 @@ def save_data(data) -> None:
         with open(file_path, 'w') as outfile:
             json.dump(content, outfile)
 
+def set_options_to_blocked_edges(edges_finally_deleted, edges_without_duplicated_with_blocked_links) -> List[Dict[str, Any]]:
+    #print("edges_finally_deleted:", edges_finally_deleted)
+    #print("\nedges_without_duplicated_with_blocked_links:", edges_without_duplicated_with_blocked_links)
+
+    # Properties to add
+    color_property = {'color': 'red'}
+    dashes_property = True
+
+    # Convert the edges_finally_deleted to a set of tuples for easy lookup
+    deleted_edges_set = {(edge['from'], edge['to']) for edge in edges_finally_deleted}
+
+    # Update the edges in edges_without_duplicated_with_blocked_links if they are in edges_finally_deleted
+    for edge in edges_without_duplicated_with_blocked_links:
+        if (edge['from'], edge['to']) in deleted_edges_set:
+            edge['color'] = color_property
+            edge['dashes'] = dashes_property
+
+    edges_with_options = edges_without_duplicated_with_blocked_links
+
+    # Print the updated list
+    print("\nedges_with_options", edges_with_options)
+
+    return edges_with_options
+
 def select_specific_data(results) -> List[Dict[str, Any]]:
     filtered_results = []
 
@@ -102,6 +126,7 @@ def remove_blocked_links(edges_to_be_deleted: List[Dict[str, int]], edges_withou
         return {'from': edge['from'], 'to': edge['to']}
 
     counter_number_of_removed_edges = 0
+    edges_finally_deleted = []
     for edge in edges_to_be_deleted:
         # Create the opposite edge dictionary
         opposite_edge = normalize_edge({'from': edge.get("to"), 'to': edge.get("from")})
@@ -109,19 +134,24 @@ def remove_blocked_links(edges_to_be_deleted: List[Dict[str, int]], edges_withou
         # Normalize and try to remove the original edge if it exists
         normalized_edges = [normalize_edge(e) for e in edges_without_duplicated]
         if normalize_edge(edge) in normalized_edges:
-            edges_without_duplicated.remove(next(e for e in edges_without_duplicated if normalize_edge(e) == normalize_edge(edge)))
+            to_delete = next(e for e in edges_without_duplicated if normalize_edge(e) == normalize_edge(edge))
+            edges_without_duplicated.remove(to_delete)
+            edges_finally_deleted.append(to_delete)
             counter_number_of_removed_edges = counter_number_of_removed_edges + 1
 
         # Normalize and try to remove the opposite edge if it exists
         if opposite_edge in normalized_edges:
-            edges_without_duplicated.remove(next(e for e in edges_without_duplicated if normalize_edge(e) == opposite_edge))
+            to_delete = next(e for e in edges_without_duplicated if normalize_edge(e) == opposite_edge)
+            edges_without_duplicated.remove(to_delete)
+            edges_finally_deleted.append(to_delete)
             counter_number_of_removed_edges = counter_number_of_removed_edges + 1
 
     print("\nAfter eliminating edge(s)")
     print(f"edges_without_duplicated: {len(edges_without_duplicated)} element(s)")
     print(edges_without_duplicated)
     print(f"Amount of removed edges: {counter_number_of_removed_edges}")
-    return edges_without_duplicated
+    print(f"\nedges_finally_deleted: {edges_finally_deleted}")
+    return edges_without_duplicated, edges_finally_deleted
 
 
 def identify_blocked_links(results: List[Dict[str, Any]]) -> List[Dict[str, int]]:
@@ -809,31 +839,36 @@ def main():
 
     # 13. Remove edge(s)
     print("\n13. Remove edge(s)")
-    edges_without_duplicated = remove_blocked_links(edges_to_be_deleted, edges_without_duplicated)
+    edges_without_duplicated, edges_finally_deleted = remove_blocked_links(edges_to_be_deleted, edges_without_duplicated)
     
     # 14. Print updated edge information
     print("\n14. Print updated edge information")
     print_updated_edge_information(edges_without_duplicated)
 
     # 15. Select specific data to be sent
-    print("\n15. Select specific data to be sent\n")
+    print("\n15. Select specific data to be sent")
     filtered_results = select_specific_data(results)
     #print(filtered_results)
+    print("Done")
 
-    # 16. Print final data
-    print("\n16. Print final data\n") 
+    # 16. Set options to blocked edges
+    print("\n16. Set options to blocked edges\n")
+    edges_with_options = set_options_to_blocked_edges(edges_finally_deleted, edges_without_duplicated_with_blocked_links)
+
+    # 17. Print final data
+    print("\n17. Print final data\n") 
     data = {
         "nodes": nodes,
         "edges": edges_without_duplicated,
-        "edges_with_blocked_links": edges_without_duplicated_with_blocked_links,
+        "edges_with_blocked_links": edges_with_options,
         "results": filtered_results,
         "error": False,
         "error_description": ""
     }
     print(data)
 
-    # 17. Save final data
-    print("\n17. Save final data")
+    # 18. Save final data
+    print("\n18. Save final data")
     save_data(data)
     print("Done")
 
