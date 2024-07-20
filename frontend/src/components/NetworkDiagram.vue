@@ -97,9 +97,15 @@ export default {
         getNodesAndEdges() {
             this.isLoading = true;
             this.errorMessage = '';
-            const apiUrl = `${import.meta.env.VITE_API_PROTOCOL}://${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}${import.meta.env.VITE_API_ENDPOINT}`;
+            
+            const protocol = import.meta.env.VITE_API_PROTOCOL;
+            const host = import.meta.env.VITE_API_HOST;
+            const port = import.meta.env.VITE_API_PORT;
+            const endpoint = import.meta.env.VITE_API_ENDPOINT_STP_GRAPH;
+            const url = `${protocol}://${host}:${port}${endpoint}`;
+            
             return axios
-                .get(apiUrl)
+                .get(url)
                 .then(response => {
                     this.nodes = response.data.nodes;
                     this.edges = response.data.edges;
