@@ -1,7 +1,7 @@
 import os
 import json
 from datetime import datetime
-from collections import Counter
+from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pprint import pprint
 from typing import List, Dict, Any, Tuple
@@ -114,6 +114,20 @@ def print_edges_with_options(edges_with_options) -> None:
     print("\nBetter way to show edges_with_options:")
     for edge in edges_with_options:
         print(edge)
+
+def find_blocked_interfaces(results) -> List[Dict[str, Dict[str, List[str]]]]:
+    blocked_interfaces = defaultdict(lambda: {"interfaces": []})
+    
+    for result in results:
+        device_prompt = result.get('prompt')
+        stp_output = result.get("stp_output_parsed", [])
+        
+        for entry in stp_output:
+            if entry.get("role") == "Alternate":
+                interface = entry.get('interface')
+                blocked_interfaces[device_prompt]["interfaces"].append(interface)
+    
+    return [{k: v} for k, v in blocked_interfaces.items()]
 
 def remove_blocked_links(edges_to_be_deleted: List[Dict[str, int]], edges_without_duplicated: List[Dict[str, int]]) -> List[Dict[str, int]]:
     m = len(edges_to_be_deleted)
@@ -901,20 +915,26 @@ def main():
     print("\n17. Print edges with options")
     print_edges_with_options(edges_with_options)
 
-    # 18. Print final data
-    print("\n18. Print final data\n") 
+    # 18. Find blocked interfaces
+    print("\n18. Find blocked interfaces")
+    blocked_interfaces = find_blocked_interfaces(results)
+    print(blocked_interfaces)
+
+    # 19. Print final data
+    print("\n19. Print final data\n") 
     data = {
         "nodes": nodes,
         "edges": edges_without_duplicated,
         "edges_with_blocked_links": edges_with_options,
+        "blocked_interfaces": blocked_interfaces,
         "results": filtered_results,
         "error": False,
         "error_description": ""
     }
     print(data)
 
-    # 19. Save final data
-    print("\n19. Save final data")
+    # 20. Save final data
+    print("\n20. Save final data")
     save_data(data)
     print("Done")
 

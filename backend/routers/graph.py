@@ -24,6 +24,7 @@ async def graph_endpoint():
         "nodes": data.get("nodes"),
         "edges": data.get("edges"),
         "edges_with_blocked_links": data.get("edges_with_blocked_links"),
+        "blocked_interfaces": data.get("blocked_interfaces"),
         "results": data.get("results"),
         "elapsed_time": elapsed_time,
     }

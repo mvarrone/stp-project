@@ -23,10 +23,20 @@
                     <p><strong>Title:</strong> {{ selectedEdgeTitle }}</p> -->
                     <p>{{ selectedEdgeTitle }}</p>
                 </div>
-                <div v-else-if="selectedElementType === 'info_blocked_links'">
-                    <p>Number of blocked interfaces: </p>
-                    <!-- Add more details about blocked links here -->
-                </div>
+                <div v-if="selectedElementType === 'info_blocked_links'">
+                <p><strong>Number of devices with blocked interfaces: {{ blocked_interfaces.length }}</strong></p>
+                <p><strong>Number of blocked interfaces: {{ totalBlockedInterfaces }}</strong></p>
+                <ul>
+                <li v-for="(item, index) in blocked_interfaces" :key="index">
+                    <strong>Device: {{ Object.keys(item)[0] }}</strong>
+                    <ul>
+                    <li v-for="(intf, interfaceIndex) in item[Object.keys(item)[0]].interfaces" :key="interfaceIndex">
+                        Interface: {{ intf }}
+                    </li>
+                    </ul>
+                </li>
+                </ul>
+            </div>
             </div>
         </div>
         <div v-if="isLoading" class="loading-container">
@@ -48,7 +58,7 @@
                     &nbsp;&nbsp;
                     <label>
                         <input type="checkbox" v-model="checked" @change="infoBlockedLinks">
-                        Show info on blocked links
+                        Show blocked link information
                     </label>
                     &nbsp;&nbsp;
                     <span class="elapsed-time">Elapsed time: {{ elapsed_time.value }} {{ elapsed_time.unit }}</span>
@@ -72,6 +82,7 @@ export default {
             nodes: [],
             edges: [],
             edges_with_blocked_links: [],
+            blocked_interfaces: [],
             results: [],
             isLoading: false,
             errorMessage: '',
@@ -103,6 +114,14 @@ export default {
                 console.log(err);
             });
     },
+    computed: {
+        totalBlockedInterfaces() {
+        return this.blocked_interfaces.reduce((total, item) => {
+            const deviceKey = Object.keys(item)[0];
+            return total + item[deviceKey].interfaces.length;
+        }, 0);
+        }
+    },
     methods: {
         initOffcanvas() {
             const offcanvasElement = document.getElementById('offcanvasRight');
@@ -131,6 +150,7 @@ export default {
                     this.nodes = response.data.nodes;
                     this.edges = response.data.edges;
                     this.edges_with_blocked_links = response.data.edges_with_blocked_links;
+                    this.blocked_interfaces = response.data.blocked_interfaces;
                     this.elapsed_time = response.data.elapsed_time;
                     this.results = response.data.results;
                 })
@@ -237,7 +257,7 @@ export default {
         infoBlockedLinks() {
             if (this.checked) {
                 this.selectedElementType = 'info_blocked_links';
-                this.sidebarTitle = 'Information on blocked links';
+                this.sidebarTitle = 'Information';
                 this.selectedNodeDeviceType = "information";
 
                 this.offcanvas.show();
