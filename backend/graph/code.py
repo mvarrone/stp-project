@@ -4,7 +4,7 @@ from datetime import datetime
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pprint import pprint
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 
 from netmiko import (
     ConnectHandler,
@@ -75,9 +75,6 @@ def set_options_to_blocked_edges(edges_finally_deleted, edges_without_duplicated
 
     edges_with_options = edges_without_duplicated_with_blocked_links
 
-    # Print the updated list
-    print("\nedges_with_options", edges_with_options)
-
     return edges_with_options
 
 def select_specific_data(results) -> List[Dict[str, Any]]:
@@ -112,6 +109,11 @@ def print_updated_edge_information(edges_without_duplicated) -> None:
     for edge in edges_without_duplicated:
         print(edge)
 
+def print_edges_with_options(edges_with_options) -> None:
+    #print(edges_with_options)
+    print("\nBetter way to show edges_with_options:")
+    for edge in edges_with_options:
+        print(edge)
 
 def remove_blocked_links(edges_to_be_deleted: List[Dict[str, int]], edges_without_duplicated: List[Dict[str, int]]) -> List[Dict[str, int]]:
     m = len(edges_to_be_deleted)
@@ -485,7 +487,7 @@ def load_credentials(CREDENTIALS_FILE: str) -> List[Dict[str, Any]]:
     
     return devices
 
-def obtain_some_values_from_version_command(parsed_version_output, device_type):
+def obtain_some_values_from_version_command(parsed_version_output, device_type) -> Tuple[str, str, str]:
     if device_type == "cisco_ios":
         # Initialize default values
         version = ''
@@ -717,7 +719,7 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             # Assign a value of 9999 as a placeholder to each device. It will be updated in the process_nodes function later
             result["level"] = 9999
 
-            # Increase ID
+            # Increase connection_id
             connection_id += 1
     except NetMikoAuthenticationException:
         result["status"] = "authentication_failure"
@@ -758,6 +760,7 @@ def main():
         future_to_device = {
             executor.submit(connect_to_device, device): device for device in devices
         }
+        
         for future in as_completed(future_to_device):
             results.append(future.result())
 
@@ -889,11 +892,16 @@ def main():
     print("Done")
 
     # 16. Set options to blocked edges
-    print("\n16. Set options to blocked edges\n")
+    print("\n16. Set options to blocked edges")
     edges_with_options = set_options_to_blocked_edges(edges_finally_deleted, edges_without_duplicated_with_blocked_links)
+    print("Done")
 
-    # 17. Print final data
-    print("\n17. Print final data\n") 
+    # 17. Print edges with options
+    print("\n17. Print edges with options")
+    print_edges_with_options(edges_with_options)
+
+    # 18. Print final data
+    print("\n18. Print final data\n") 
     data = {
         "nodes": nodes,
         "edges": edges_without_duplicated,
@@ -904,8 +912,8 @@ def main():
     }
     print(data)
 
-    # 18. Save final data
-    print("\n18. Save final data")
+    # 19. Save final data
+    print("\n19. Save final data")
     save_data(data)
     print("Done")
 

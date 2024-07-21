@@ -41,7 +41,6 @@
                         <input type="checkbox" v-model="useFilteredEdges" @change="toggleEdges">
                         Show blocked links
                     </label>
-                    &nbsp;&nbsp;&nbsp;
                     <span class="elapsed-time">Elapsed time: {{ elapsed_time.value }} {{ elapsed_time.unit }}</span>
                 </div>
                 <div id="mynetwork"></div>
@@ -172,8 +171,14 @@ export default {
                         self.selectedNode = null;
                     }
                 } else if (selected_edge != null) {     
-                    // Look for the selected edge within edges variable
-                    const selectedEdgeResult = self.edges.find(edge => edge.id === selected_edge);
+                    // Look for the selected edge within edges or edges_with_blocked_links
+                    let selectedEdgeResult = null;
+                    
+                    if (self.useFilteredEdges) {
+                        selectedEdgeResult = self.edges_with_blocked_links.find(edge => edge.id === selected_edge);
+                    } else {
+                        selectedEdgeResult = self.edges.find(edge => edge.id === selected_edge);
+                    }
 
                     if (selectedEdgeResult) {
                         // Save data to show in sidebar
