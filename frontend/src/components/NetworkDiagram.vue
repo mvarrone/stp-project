@@ -158,9 +158,9 @@ export default {
                         self.selectedNodeDevice = selectedNodeResult.device;
                         self.selectedNodeDeviceType = selectedNodeResult.device_type;
                         self.selectedNodeLevel = selectedNodeResult.level;
-                        self.selectedNodeVersion = selectedNodeResult.version_output_parsed[0].version;
-                        self.selectedNodeUptime = selectedNodeResult.version_output_parsed[0].uptime;
-                        self.selectedNodeSerial = selectedNodeResult.version_output_parsed[0].serial;
+                        self.selectedNodeVersion = selectedNodeResult.version;
+                        self.selectedNodeUptime = selectedNodeResult.uptime;
+                        self.selectedNodeSerial = selectedNodeResult.serial;
 
                         // Show sidebar
                         const offcanvasElement = document.getElementById('offcanvasRight');

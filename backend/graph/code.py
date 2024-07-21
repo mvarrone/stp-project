@@ -89,7 +89,9 @@ def select_specific_data(results) -> List[Dict[str, Any]]:
         id = result.get('id')
         label = result.get('label')
         level = result.get('level')
-        version_output_parsed = result.get('version_output_parsed')
+        version = result.get('version')
+        serial = result.get('serial')
+        uptime = result.get('uptime')
 
         filtered_results.append({
             'device': device,
@@ -97,7 +99,9 @@ def select_specific_data(results) -> List[Dict[str, Any]]:
             'id': id,
             'label': label,
             'level': level,
-            'version_output_parsed': version_output_parsed
+            'version': version,
+            'serial': serial,
+            'uptime': uptime
         })
 
     return filtered_results
@@ -481,6 +485,24 @@ def load_credentials(CREDENTIALS_FILE: str) -> List[Dict[str, Any]]:
     
     return devices
 
+def obtain_some_values_from_version_command(parsed_version_output, device_type):
+    if device_type == "cisco_ios":
+        # Initialize default values
+        version = ''
+        serial = ''
+        uptime = ''
+        
+        # Process parsed_version_output
+        for entry in parsed_version_output:
+            if 'version' in entry:
+                version = entry['version']
+            if 'serial' in entry:
+                serial = entry['serial']
+            if 'uptime' in entry:
+                uptime = entry['uptime']
+        
+        return version, serial, uptime
+
 def modify_version_parsed_data(parsed_version_output, device_type) -> List[Dict[str, str]]:
     if device_type == "cisco_ios":
         for entry in parsed_version_output:
@@ -569,6 +591,9 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
         "cdp_output_parsed": "",
         "version_output_raw": "",
         "version_output_parsed": "",
+        "version": "",
+        "serial": "",
+        "uptime": "",
         "id": "",
         "label": "",
         "title": "",
@@ -665,6 +690,18 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
 
             # 4. Assign post processed data to dictionary
             result["version_output_parsed"] = parsed_version_output
+
+            # 5. Get values from version command
+            version, serial, uptime = obtain_some_values_from_version_command(parsed_version_output, device_type)
+
+            # version
+            result["version"] = version
+
+            # serial
+            result["serial"] = serial
+
+            # uptime
+            result["uptime"] = uptime
 
             ## Others
             # Assign ID to each device for being used in nodes later

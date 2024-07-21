@@ -21,6 +21,7 @@
     },
     methods: {
       async fetchData() {
+        
         const protocol = import.meta.env.VITE_API_PROTOCOL;
         const host = import.meta.env.VITE_API_HOST;
         const port = import.meta.env.VITE_API_PORT;
