@@ -10,7 +10,7 @@ import { RouterLink, RouterView } from 'vue-router'
           <RouterLink class="navbar-brand" to="/">Home</RouterLink>
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
-              <a class="nav-link active" aria-current="page" href="/stp">STP</a>
+              <RouterLink class="nav-link" to="/stp">STP</RouterLink>
             </li>
           </ul>
         </div>
@@ -20,4 +20,12 @@ import { RouterLink, RouterView } from 'vue-router'
   <RouterView />
 </template>
 
-<style scoped></style>
+<style scoped>
+.navbar-nav .nav-link {
+  line-height: 1.5; /* Adjust this value as needed */
+}
+
+.navbar-brand {
+  line-height: 1.5; /* Adjust this value as needed */
+}
+</style>
