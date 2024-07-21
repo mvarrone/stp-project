@@ -23,6 +23,10 @@
                     <p><strong>Title:</strong> {{ selectedEdgeTitle }}</p> -->
                     <p>{{ selectedEdgeTitle }}</p>
                 </div>
+                <div v-else-if="selectedElementType === 'info_blocked_links'">
+                    <p>Number of blocked interfaces: </p>
+                    <!-- Add more details about blocked links here -->
+                </div>
             </div>
         </div>
         <div v-if="isLoading" class="loading-container">
@@ -41,6 +45,12 @@
                         <input type="checkbox" v-model="useFilteredEdges" @change="toggleEdges">
                         Show blocked links
                     </label>
+                    &nbsp;&nbsp;
+                    <label>
+                        <input type="checkbox" v-model="checked" @change="infoBlockedLinks">
+                        Show info on blocked links
+                    </label>
+                    &nbsp;&nbsp;
                     <span class="elapsed-time">Elapsed time: {{ elapsed_time.value }} {{ elapsed_time.unit }}</span>
                 </div>
                 <div id="mynetwork"></div>
@@ -51,9 +61,7 @@
 
 <script>
 import axios from "axios";
-import {
-    Network
-} from 'vis-network';
+import { Network } from 'vis-network';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap';
 
@@ -80,19 +88,33 @@ export default {
             selectedElementType: '',
             selectedEdgeFrom: '',
             selectedEdgeTo: '',
-            selectedEdgeTitle: ''
+            selectedEdgeTitle: '',
+            checked: false,
+            offcanvas: null
         }
     },
     mounted() {
         this.getNodesAndEdges()
             .then(() => {
                 this.initNetwork();
+                this.initOffcanvas();
             })
             .catch(err => {
                 console.log(err);
             });
     },
     methods: {
+        initOffcanvas() {
+            const offcanvasElement = document.getElementById('offcanvasRight');
+            this.offcanvas = new bootstrap.Offcanvas(offcanvasElement);
+            
+            offcanvasElement.addEventListener('hidden.bs.offcanvas', this.handleOffcanvasHidden);
+        },
+        handleOffcanvasHidden() {
+            if (this.selectedElementType === 'info_blocked_links') {
+                this.checked = false;
+            }
+        },
         getNodesAndEdges() {
             this.isLoading = true;
             this.errorMessage = '';
@@ -211,6 +233,22 @@ export default {
             const options = this.getNetworkOptions();
 
             this.updateNetwork(container, data, options);
+        },
+        infoBlockedLinks() {
+            if (this.checked) {
+                this.selectedElementType = 'info_blocked_links';
+                this.sidebarTitle = 'Information on blocked links';
+                this.selectedNodeDeviceType = "information";
+
+                this.offcanvas.show();
+            } else {
+                this.offcanvas.hide();
+            }
+        },
+        beforeUnmount() {
+        // Clean up the event listener when the component is destroyed
+        const offcanvasElement = document.getElementById('offcanvasRight');
+        offcanvasElement.removeEventListener('hidden.bs.offcanvas', this.handleOffcanvasHidden);
         },
         getNetworkOptions() {
             return {
@@ -360,8 +398,13 @@ h2 {
 }
 
 .elapsed-time {
-    margin-left: 15px;
-    /* Ajusta el valor según sea necesario */
+    /* margin-left: 15px; */
+    margin-left: auto;
+    color: #ffffff;
+}
+
+.check-button {
+    margin-left: 55px;
 }
 
 .sidebar-icon {

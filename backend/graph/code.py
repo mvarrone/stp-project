@@ -14,13 +14,13 @@ from netmiko import (
 from netmiko.utilities import get_structured_data
 
 
-def read_counter(COUNTER_FILE):
+def read_counter(COUNTER_FILE) -> int:
     if not os.path.exists(COUNTER_FILE):
         return 1
     with open(COUNTER_FILE, 'r') as file:
         return int(file.read().strip())
 
-def write_counter(counter, COUNTER_FILE):
+def write_counter(counter, COUNTER_FILE) -> None:
     with open(COUNTER_FILE, 'w') as file:
         file.write(str(counter))
 
@@ -696,6 +696,7 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             # 5. Get values from version command
             version, serial, uptime = obtain_some_values_from_version_command(parsed_version_output, device_type)
 
+            # 6. Set each value in results dictionary
             # version
             result["version"] = version
 
@@ -714,7 +715,7 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             result["label"] = result.get("prompt")
 
             # Assign a title to each device for being used in nodes later
-            result["title"] = f"Mgmt IP address: {device.get("host")} - OS: {device.get("device_type")}"
+            result["title"] = f"Mgmt IP address: {device.get("host")} - Platform: {device.get("device_type")}"
             
             # Assign a value of 9999 as a placeholder to each device. It will be updated in the process_nodes function later
             result["level"] = 9999
@@ -760,7 +761,7 @@ def main():
         future_to_device = {
             executor.submit(connect_to_device, device): device for device in devices
         }
-        
+
         for future in as_completed(future_to_device):
             results.append(future.result())
 
