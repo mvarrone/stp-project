@@ -77,8 +77,6 @@ def set_options_to_blocked_edges(edges_finally_deleted, edges_without_duplicated
 
     return edges_with_options
 
-
-
 def select_specific_data(results) -> List[Dict[str, Any]]:
     filtered_results = []
 
