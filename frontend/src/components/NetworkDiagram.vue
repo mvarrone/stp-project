@@ -28,7 +28,7 @@
                 <p><strong>Number of blocked interfaces: {{ totalBlockedInterfaces }}</strong></p>
                 <ul>
                 <li v-for="(item, index) in blocked_interfaces" :key="index">
-                    <strong>Device: {{ Object.keys(item)[0] }}</strong>
+                    <strong>{{ Object.keys(item)[0] }}</strong>
                     <ul>
                     <li v-for="(intf, interfaceIndex) in item[Object.keys(item)[0]].interfaces" :key="interfaceIndex">
                         Interface: {{ intf }}
