@@ -57,14 +57,11 @@ def save_data(data) -> None:
         with open(file_path, 'w') as outfile:
             json.dump(content, outfile)
 
-def set_options_to_blocked_edges(edges_finally_deleted, edges_without_duplicated_with_blocked_links) -> List[Dict[str, Any]]:
-    #print("edges_finally_deleted:", edges_finally_deleted)
-    #print("\nedges_without_duplicated_with_blocked_links:", edges_without_duplicated_with_blocked_links)
-
+def set_options_to_blocked_edges(edges_finally_deleted, edges_without_duplicated_with_blocked_links):
     # Properties to add
-    color_property = {'color': 'red'}
+    color_property = { 'color': 'red' }
     dashes_property = True
-    smooth_property = {'type': 'curvedCW', 'roundness': 0.5 }
+    smooth_property = { 'type': 'curvedCW', 'roundness': 0.5 }
 
     # Convert the edges_finally_deleted to a set of tuples for easy lookup
     deleted_edges_set = {(edge['from'], edge['to']) for edge in edges_finally_deleted}
@@ -79,6 +76,8 @@ def set_options_to_blocked_edges(edges_finally_deleted, edges_without_duplicated
     edges_with_options = edges_without_duplicated_with_blocked_links
 
     return edges_with_options
+
+
 
 def select_specific_data(results) -> List[Dict[str, Any]]:
     filtered_results = []
@@ -119,6 +118,12 @@ def print_edges_with_options(edges_with_options) -> None:
         print(edge)
 
 def find_blocked_interfaces(results) -> List[Dict[str, Dict[str, List[str]]]]:
+    # Here, we are implementing a list of blocked interfaces (blocked by STP protocol) for each device
+    # In other words, each device has their own list of blocked interfaces
+    # Of course, that list can contain 1 or more than 1 interface name
+    # Note: That list can not contain 0 elements (can not be empty) because we are adding elements to the list
+    #  only for cases where Role is equal to Alternate
+
     blocked_interfaces = defaultdict(lambda: {"interfaces": []})
     
     for result in results:

@@ -16,6 +16,16 @@
                     <p><strong>Version:</strong> {{ selectedNodeVersion }}</p>
                     <p><strong>Uptime:</strong> {{ selectedNodeUptime }}</p>
                     <p><strong>Serial:</strong> {{ selectedNodeSerial }}</p>
+                    <div>
+                    <p>
+                        <strong>Blocked Interfaces: {{ blockedInterfacesCount }}</strong>
+                    </p>
+                        <ul v-if="hasBlockedInterfaces">
+                            <li v-for="(intf, index) in currentDeviceBlockedInterfaces" :key="index">
+                                {{ intf }}
+                            </li>
+                        </ul>
+                    </div>
                 </div>
                 <div v-else-if="selectedElementType === 'edge'">
                     <!-- <p><strong>From:</strong> {{ selectedEdgeFrom }}</p>
@@ -27,14 +37,14 @@
                 <p><strong>Number of devices with blocked interfaces: {{ blocked_interfaces.length }}</strong></p>
                 <p><strong>Number of blocked interfaces: {{ totalBlockedInterfaces }}</strong></p>
                 <ul>
-                <li v-for="(item, index) in blocked_interfaces" :key="index">
-                    <strong>{{ Object.keys(item)[0] }}</strong>
-                    <ul>
-                    <li v-for="(intf, interfaceIndex) in item[Object.keys(item)[0]].interfaces" :key="interfaceIndex">
-                        Interface: {{ intf }}
+                    <li v-for="(item, index) in blocked_interfaces" :key="index">
+                        <strong>{{ Object.keys(item)[0] }}</strong>
+                        <ul>
+                            <li v-for="(intf, interfaceIndex) in item[Object.keys(item)[0]].interfaces" :key="interfaceIndex">
+                                Interface: {{ intf }}
+                            </li>
+                        </ul>
                     </li>
-                    </ul>
-                </li>
                 </ul>
             </div>
             </div>
@@ -116,10 +126,20 @@ export default {
     },
     computed: {
         totalBlockedInterfaces() {
-        return this.blocked_interfaces.reduce((total, item) => {
-            const deviceKey = Object.keys(item)[0];
-            return total + item[deviceKey].interfaces.length;
-        }, 0);
+            return this.blocked_interfaces.reduce((total, item) => {
+                const deviceKey = Object.keys(item)[0];
+                return total + item[deviceKey].interfaces.length;
+            }, 0);
+        },
+        hasBlockedInterfaces() {
+            return this.blockedInterfacesCount > 0;
+        },
+        currentDeviceBlockedInterfaces() {
+            const device = this.blocked_interfaces.find(d => Object.keys(d)[0] === this.sidebarTitle);
+            return device ? device[this.sidebarTitle].interfaces : [];
+        },
+        blockedInterfacesCount() {
+            return this.currentDeviceBlockedInterfaces.length;
         }
     },
     methods: {
