@@ -10,7 +10,7 @@ import { RouterLink, RouterView } from 'vue-router'
           <RouterLink class="navbar-brand" to="/">Home</RouterLink>
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item">
-              <RouterLink class="nav-link" to="/stp">STP</RouterLink>
+              <RouterLink class="nav-link" to="/stp">STP Graph</RouterLink>
             </li>
           </ul>
         </div>

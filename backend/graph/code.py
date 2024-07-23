@@ -47,7 +47,8 @@ def save_data(data) -> None:
     paths_and_data = {
         'nodes.json': data.get("nodes"),
         'edges.json': data.get("edges"),
-        'edges_with_blocked_links.json': data.get("edges_with_blocked_links")
+        'edges_with_blocked_links.json': data.get("edges_with_blocked_links"),
+        'blocked_interfaces.json': data.get("blocked_interfaces")
     }
 
     # Save data to the files
@@ -63,6 +64,7 @@ def set_options_to_blocked_edges(edges_finally_deleted, edges_without_duplicated
     # Properties to add
     color_property = {'color': 'red'}
     dashes_property = True
+    smooth_property = {'type': 'curvedCW', 'roundness': 0.5 }
 
     # Convert the edges_finally_deleted to a set of tuples for easy lookup
     deleted_edges_set = {(edge['from'], edge['to']) for edge in edges_finally_deleted}
@@ -72,6 +74,7 @@ def set_options_to_blocked_edges(edges_finally_deleted, edges_without_duplicated
         if (edge['from'], edge['to']) in deleted_edges_set:
             edge['color'] = color_property
             edge['dashes'] = dashes_property
+            edge['smooth'] = smooth_property
 
     edges_with_options = edges_without_duplicated_with_blocked_links
 
