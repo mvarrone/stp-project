@@ -282,6 +282,24 @@ def process_edges(results) -> List[Dict[str, Any]]:
                     break
             
             if neighbor_id is not None:
+                # # Find role and status interface for local switch
+                # for entry in results:
+                #     if entry.get("prompt") == switch_name:
+                #         for stp_data in entry.get("stp_output_parsed"):
+                #             if stp_data.get("interface") == local_interface:
+                #                 local_role = stp_data.get("role")
+                #                 local_status = stp_data.get("status")
+                #                 title = f"{switch_name}: {local_interface} {local_role} {local_status} <-> {neighbor_prompt}: {neighbor_interface}"
+
+                # # Find role and status interface for neighbor switch
+                # for entry in results:
+                #     if entry.get("prompt") == neighbor_prompt:
+                #         for stp_data in entry.get("stp_output_parsed"):
+                #             if stp_data.get("interface") == neighbor_interface:
+                #                 neighbor_role = stp_data.get("role")
+                #                 neighbor_status = stp_data.get("status")
+                #                 title = f"{switch_name}: {local_interface} {local_role} {local_status} <-> {neighbor_prompt}: {neighbor_interface} {neighbor_role} {neighbor_status}"
+
                 title = f"{switch_name}: {local_interface} <-> {neighbor_prompt}: {neighbor_interface}"
                 edge = {'from': switch_id, 'to': neighbor_id, "title": title}
                 edges.append(edge)
