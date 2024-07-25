@@ -5,6 +5,7 @@ from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pprint import pprint
 from typing import List, Dict, Any, Tuple
+import re
 
 from netmiko import (
     ConnectHandler,
@@ -62,6 +63,7 @@ def set_options_to_blocked_edges(edges_finally_deleted, edges_without_duplicated
     color_property = { 'color': 'red' }
     dashes_property = True
     smooth_property = { 'type': 'curvedCW', 'roundness': 0.5 }
+    label_property = 'X'
 
     # Convert the edges_finally_deleted to a set of tuples for easy lookup
     deleted_edges_set = {(edge['from'], edge['to']) for edge in edges_finally_deleted}
@@ -72,6 +74,7 @@ def set_options_to_blocked_edges(edges_finally_deleted, edges_without_duplicated
             edge['color'] = color_property
             edge['dashes'] = dashes_property
             edge['smooth'] = smooth_property
+            edge['label'] = label_property
 
     edges_with_options = edges_without_duplicated_with_blocked_links
 
@@ -328,8 +331,11 @@ def print_node_information(nodes) -> None:
 def update_title_with_level_info(nodes) -> List[Dict[str, Any]]:
     for node in nodes:
         level = node.get("level")        
-        title = node.get("title")        
-        node["title"] = title + f"\nLevel: {level}"
+        priority = node.get("priority")        
+        mac_address = node.get("mac_address")       
+
+        title = node.get("title")  
+        node["title"] = title + f"\nLevel: {level}\nPriority: {priority}\nMAC Address: {mac_address}"
     return nodes
 
 def print_node_structure(nodes) -> None:
@@ -360,7 +366,9 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
             "id": root_bridge_data.get("id"),
             "label": root_bridge_data.get("label"),
             "level": root_bridge_data.get("level"),
-            "title": root_bridge_data.get("title")
+            "title": root_bridge_data.get("title"),
+            "priority": root_bridge_data.get("priority"),
+            "mac_address": root_bridge_data.get("mac_address")
         }
         nodes.append(node)
         return nodes
@@ -387,7 +395,9 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
                         "id": result.get("id"),
                         "label": result.get("label"),
                         "level": 1, # 1 because this node is a root bridge neighbor
-                        "title": result.get("title")
+                        "title": result.get("title"),
+                        "priority": result.get("priority"),
+                        "mac_address": result.get("mac_address")
                     }
                     nodes.append(node)
                     result["level"] = 1 # Update results dictionary changing from 9999 to 1 for root bridge neighbors
@@ -437,7 +447,9 @@ def process_nodes(root_bridge_data, results) -> List[Dict[str, Any]]:
                             "id": result.get("id"),
                             "label": result.get("label"),
                             "level": updated_level,
-                            "title": result.get("title")
+                            "title": result.get("title"),
+                            "priority": result.get("priority"),
+                            "mac_address": result.get("mac_address")
                         }
                         nodes.append(node)
 
@@ -476,6 +488,9 @@ def find_root_bridge(results: List[Dict[str, Any]]) -> Dict[str, Any]:
                 root_bridge_data["label"] = result.get("label")
                 root_bridge_data["title"] = result.get("title")
                 root_bridge_data["neighbors"] = result.get("cdp_output_parsed")
+                root_bridge_data["priority"] = result.get("priority")
+                root_bridge_data["mac_address"] = result.get("mac_address")
+
                 result["level"] = 0 # Update results dictionary changing from 9999 to 0 for root bridge level value
                 return root_bridge_data
 
@@ -526,6 +541,41 @@ def load_credentials(CREDENTIALS_FILE: str) -> List[Dict[str, Any]]:
         return devices
     
     return devices
+
+def extract_bridge_id(stp_output_raw, device_type):
+    if device_type == "cisco_ios":
+        bridge_id = {}
+        in_bridge_id_section = False
+
+        # Split the input text into lines
+        lines = stp_output_raw.split("\n")
+
+        # Process each line
+        for line in lines:
+            line = line.strip()
+
+            # Check for Bridge ID
+            if line.startswith("Bridge ID"):
+                in_bridge_id_section = True
+                # Extract the priority
+                priority_match = re.search(r"Priority\s+(\d+)", line)
+                if priority_match:
+                    bridge_id["priority"] = priority_match.group(1)
+                continue
+
+            # If we're in the Bridge ID section, look for the Address
+            if in_bridge_id_section:
+                if line.startswith("Address"):
+                    # Extract the address
+                    address_match = re.search(r"Address\s+([0-9a-fA-F.]+)", line)
+                    if address_match:
+                        bridge_id["mac_address"] = address_match.group(1)
+                        break  # We've found the address, so we can stop processing
+                elif line.strip() == "":
+                    # If we encounter an empty line, we've moved past the Bridge ID section
+                    break
+
+        return bridge_id["priority"], bridge_id["mac_address"]
 
 def obtain_some_values_from_version_command(parsed_version_output, device_type) -> Tuple[str, str, str]:
     if device_type == "cisco_ios":
@@ -639,7 +689,9 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
         "id": "",
         "label": "",
         "title": "",
-        "level": ""
+        "level": "",
+        "priority": "",
+        "mac_address": ""
     }
 
     # STP
@@ -745,6 +797,13 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
 
             # uptime
             result["uptime"] = uptime
+
+            # 7. Set Priority and MAC Address for the node
+            stp_output_raw = result.get("stp_output_raw")
+            priority, mac_address = extract_bridge_id(stp_output_raw, device_type)
+
+            result["priority"] = priority
+            result["mac_address"] = mac_address
 
             ## Others
             # Assign ID to each device for being used in nodes later
