@@ -282,6 +282,7 @@ def process_edges(results) -> List[Dict[str, Any]]:
                     break
             
             if neighbor_id is not None:
+
                 # # Find role and status interface for local switch
                 # for entry in results:
                 #     if entry.get("prompt") == switch_name:
@@ -327,7 +328,7 @@ def update_title_with_level_info(nodes) -> List[Dict[str, Any]]:
     for node in nodes:
         level = node.get("level")        
         title = node.get("title")        
-        node["title"] = title + f" - Level: {level}"
+        node["title"] = title + f"\nLevel: {level}"
     return nodes
 
 def print_node_structure(nodes) -> None:
@@ -753,7 +754,7 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             result["label"] = result.get("prompt")
 
             # Assign a title to each device for being used in nodes later
-            result["title"] = f"Mgmt IP address: {device.get("host")} - Platform: {device.get("device_type")}"
+            result["title"] = f"SVI: {device.get("host")}\nPlatform: {device.get("device_type")}"
             
             # Assign a value of 9999 as a placeholder to each device. It will be updated in the process_nodes function later
             result["level"] = 9999
