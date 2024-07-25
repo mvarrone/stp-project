@@ -301,7 +301,8 @@ def process_edges(results) -> List[Dict[str, Any]]:
                 #                 neighbor_status = stp_data.get("status")
                 #                 title = f"{switch_name}: {local_interface} {local_role} {local_status} <-> {neighbor_prompt}: {neighbor_interface} {neighbor_role} {neighbor_status}"
 
-                title = f"{switch_name}: {local_interface} <-> {neighbor_prompt}: {neighbor_interface}"
+                title = f"{switch_name}: {local_interface}\n⇆\n{neighbor_prompt}: {neighbor_interface}"
+                
                 edge = {'from': switch_id, 'to': neighbor_id, "title": title}
                 edges.append(edge)
 
