@@ -285,7 +285,6 @@ def process_edges(results) -> List[Dict[str, Any]]:
                     break
             
             if neighbor_id is not None:
-
                 # # Find role and status interface for local switch
                 # for entry in results:
                 #     if entry.get("prompt") == switch_name:
@@ -732,8 +731,9 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             )
 
             # 2. Parse STP data locally
+            stp_output_raw = result.get("stp_output_raw")
             parsed_stp_output = get_structured_data(
-                raw_output=result.get("stp_output_raw"),
+                raw_output=stp_output_raw,
                 platform=connection.device_type,
                 command=spanning_tree_command,
                 template=f"my_own_ntc_templates/modified/{stp_template_name}"
@@ -799,9 +799,7 @@ def connect_to_device(device: Dict[str, Any]) -> Dict[str, Any]:
             result["uptime"] = uptime
 
             # 7. Set Priority and MAC Address for the node
-            stp_output_raw = result.get("stp_output_raw")
             priority, mac_address = extract_bridge_id(stp_output_raw, device_type)
-
             result["priority"] = priority
             result["mac_address"] = mac_address
 
