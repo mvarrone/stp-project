@@ -70,7 +70,7 @@
                         </label>
                     </div>
 
-                    <div class="vlan-dropdown-container">
+                    <!-- <div class="vlan-dropdown-container">
                         <label for="vlan-select">Logical topology for VLAN:</label>
                         <select id="vlan-select" v-model="selectedVlan" @change="handleVlanChange">
                             <option value="">Select a VLAN</option>
@@ -78,7 +78,7 @@
                             <option value="10">VLAN 10 - Data</option>
                             <option value="20">VLAN 20 - Voice</option>
                         </select>
-                    </div>
+                    </div> -->
 
                     <div class="right-controls">
                         <label>
