@@ -89,6 +89,8 @@ def select_specific_data(results) -> List[Dict[str, Any]]:
         id = result.get('id')
         label = result.get('label')
         level = result.get('level')
+        priority = result.get('priority')
+        mac_address = result.get('mac_address')
         version = result.get('version')
         serial = result.get('serial')
         uptime = result.get('uptime')
@@ -99,6 +101,8 @@ def select_specific_data(results) -> List[Dict[str, Any]]:
             'id': id,
             'label': label,
             'level': level,
+            'priority': priority,
+            'mac_address': mac_address,
             'version': version,
             'serial': serial,
             'uptime': uptime

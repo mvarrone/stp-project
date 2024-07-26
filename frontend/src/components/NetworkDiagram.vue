@@ -10,9 +10,11 @@
             </div>
             <div class="offcanvas-body">
                 <div v-if="selectedElementType === 'node'">
-                    <p><strong>Mgmt IP address:</strong> {{ selectedNodeDevice }}</p>
+                    <p><strong>SVI:</strong> {{ selectedNodeDevice }}</p>
                     <p><strong>Platform:</strong> {{ selectedNodeDeviceType }}</p>
                     <p><strong>Level:</strong> {{ selectedNodeLevel }}</p>
+                    <p><strong>Priority:</strong> {{ selectedNodePriority }}</p>
+                    <p><strong>MAC Address:</strong> {{ selectedNodeMACAddress }}</p>
                     <p><strong>Version:</strong> {{ selectedNodeVersion }}</p>
                     <p><strong>Uptime:</strong> {{ selectedNodeUptime }}</p>
                     <p><strong>Serial:</strong> {{ selectedNodeSerial }}</p>
@@ -61,17 +63,30 @@
             </div>
             <div v-else>
                 <div class="checkbox-container">
-                    <label>
-                        <input type="checkbox" v-model="useFilteredEdges" @change="toggleEdges">
-                        Show blocked links
-                    </label>
-                    &nbsp;&nbsp;
-                    <label>
-                        <input type="checkbox" v-model="checked" @change="infoBlockedLinks">
-                        Show blocked link information
-                    </label>
-                    &nbsp;&nbsp;
-                    <span class="elapsed-time">Elapsed time: {{ elapsed_time.value }} {{ elapsed_time.unit }}</span>
+                    <div class="left-controls">
+                        <label>
+                            <input type="checkbox" v-model="useFilteredEdges" @change="toggleEdges">
+                            Show blocked links
+                        </label>
+                    </div>
+
+                    <div class="vlan-dropdown-container">
+                        <label for="vlan-select">Logical topology for VLAN:</label>
+                        <select id="vlan-select" v-model="selectedVlan" @change="handleVlanChange">
+                            <option value="">Select a VLAN</option>
+                            <option value="1">VLAN 1 - Default</option>
+                            <option value="10">VLAN 10 - Data</option>
+                            <option value="20">VLAN 20 - Voice</option>
+                        </select>
+                    </div>
+
+                    <div class="right-controls">
+                        <label>
+                            <input type="checkbox" v-model="checked" @change="infoBlockedLinks">
+                            Show blocked link information
+                        </label>
+                        <span class="elapsed-time">Elapsed time: {{ elapsed_time.value }} {{ elapsed_time.unit }}</span>
+                    </div>
                 </div>
                 <div id="mynetwork"></div>
             </div>
@@ -103,6 +118,8 @@ export default {
             selectedNodeDevice: '',
             selectedNodeDeviceType: '',
             selectedNodeLevel: '',
+            selectedNodePriority: '',
+            selectedNodeMACAddress: '',
             selectedNodeVersion: '',
             selectedNodeUptime: '',
             selectedNodeSerial: '',
@@ -111,7 +128,8 @@ export default {
             selectedEdgeTo: '',
             selectedEdgeTitle: '',
             checked: false,
-            offcanvas: null
+            offcanvas: null,
+            selectedVlan: ''
         }
     },
     mounted() {
@@ -143,6 +161,10 @@ export default {
         }
     },
     methods: {
+        handleVlanChange() {
+            console.log('Selected VLAN:', this.selectedVlan);
+            // You can add more logic here to update the network based on the selected VLAN
+        },
         initOffcanvas() {
             const offcanvasElement = document.getElementById('offcanvasRight');
             this.offcanvas = new bootstrap.Offcanvas(offcanvasElement);
@@ -219,6 +241,8 @@ export default {
                         self.selectedNodeDevice = selectedNodeResult.device;
                         self.selectedNodeDeviceType = selectedNodeResult.device_type;
                         self.selectedNodeLevel = selectedNodeResult.level;
+                        self.selectedNodePriority = selectedNodeResult.priority;
+                        self.selectedNodeMACAddress = selectedNodeResult.mac_address;
                         self.selectedNodeVersion = selectedNodeResult.version;
                         self.selectedNodeUptime = selectedNodeResult.uptime;
                         self.selectedNodeSerial = selectedNodeResult.serial;
@@ -337,14 +361,6 @@ body {
     background-color: #333;
 }
 
-.checkbox-container {
-    margin: 10px;
-    color: #ffffff;
-    background-color: #333;
-    display: flex;
-    align-items: center;
-}
-
 #mynetwork {
     width: 100%;
     height: 877px;
@@ -432,17 +448,6 @@ h2 {
     align-items: center;
 }
 
-.checkbox-container {
-    display: flex;
-    align-items: center;
-}
-
-.elapsed-time {
-    /* margin-left: 15px; */
-    margin-left: auto;
-    color: #ffffff;
-}
-
 .check-button {
     margin-left: 55px;
 }
@@ -455,5 +460,50 @@ h2 {
     /* Espacio entre la imagen y el título */
     object-fit: contain;
     /* Asegura que la imagen se escale correctamente */
+}
+
+.checkbox-container {
+  margin: 10px;
+  color: #ffffff;
+  background-color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.vlan-dropdown-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+.vlan-dropdown-container label {
+  margin-right: 10px;
+  white-space: nowrap;
+}
+
+#vlan-select {
+  padding: 5px;
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: #333;
+}
+
+.left-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.right-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.elapsed-time {
+  margin-left: 15px;
+  white-space: nowrap;
 }
 </style>
