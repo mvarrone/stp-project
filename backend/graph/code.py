@@ -331,7 +331,7 @@ def print_node_information(nodes) -> None:
     for node in nodes:
         print(node)
 
-def update_title_with_level_info(nodes) -> List[Dict[str, Any]]:
+def update_node_title_with_level_info(nodes) -> List[Dict[str, Any]]:
     for node in nodes:
         level = node.get("level")        
         priority = node.get("priority")        
@@ -954,7 +954,7 @@ def main():
 
     # 7a. Update each node title with level information
     print("\n7a. Update each node title with level information")
-    nodes = update_title_with_level_info(nodes)
+    nodes = update_node_title_with_level_info(nodes)
     print("Done")
 
     # 8. Print node information

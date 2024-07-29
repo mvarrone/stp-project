@@ -15,6 +15,7 @@
                     <p><strong>Level:</strong> {{ selectedNodeLevel }}</p>
                     <p><strong>Priority:</strong> {{ selectedNodePriority }}</p>
                     <p><strong>MAC Address:</strong> {{ selectedNodeMACAddress }}</p>
+                    <p><strong>Cost to Root Bridge:</strong> {{ selectedNodeCost }}</p>
                     <p><strong>Version:</strong> {{ selectedNodeVersion }}</p>
                     <p><strong>Uptime:</strong> {{ selectedNodeUptime }}</p>
                     <p><strong>Serial:</strong> {{ selectedNodeSerial }}</p>
@@ -120,6 +121,7 @@ export default {
             selectedNodeLevel: '',
             selectedNodePriority: '',
             selectedNodeMACAddress: '',
+            selectedNodeCost: '',
             selectedNodeVersion: '',
             selectedNodeUptime: '',
             selectedNodeSerial: '',
@@ -227,6 +229,7 @@ export default {
             this.network.on("click", function (params) {
                 const selected_node = this.getNodeAt(params.pointer.DOM);
                 const selected_edge = this.getEdgeAt(params.pointer.DOM);
+                
                 if (selected_node != null) {
                     //console.log("Click event. node id: " + selected_node);
 
@@ -243,6 +246,7 @@ export default {
                         self.selectedNodeLevel = selectedNodeResult.level;
                         self.selectedNodePriority = selectedNodeResult.priority;
                         self.selectedNodeMACAddress = selectedNodeResult.mac_address;
+                        self.selectedNodeCost = selectedNodeResult.cost;
                         self.selectedNodeVersion = selectedNodeResult.version;
                         self.selectedNodeUptime = selectedNodeResult.uptime;
                         self.selectedNodeSerial = selectedNodeResult.serial;
