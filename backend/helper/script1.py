@@ -1,4 +1,5 @@
 import re
+from typing import Dict, Any
 
 input_text_1 = """
 VLAN0001
@@ -99,7 +100,7 @@ Gi1/3               Desg FWD 4         128.8    Shr
 """
 
 
-def parse_stp_data_per_vlan(raw_text):
+def parse_stp_data_per_vlan(raw_text: str) -> Dict[str, Dict[str, Any]]:
     vlan_info = {}
     current_vlan = None
     current_id = None
@@ -113,6 +114,8 @@ def parse_stp_data_per_vlan(raw_text):
         if vlan_match:
             current_vlan = vlan_match.group(1)
             vlan_info[current_vlan] = {
+                "vlan_id": int(current_vlan),
+                "vlan_id_str": current_vlan,
                 "protocol": "",
                 "root_id": {},
                 "bridge_id": {},
@@ -166,55 +169,66 @@ def parse_stp_data_per_vlan(raw_text):
     return vlan_info
 
 
-def format_vlan_info(parsed_stp_data):
-    formatted_output = []
+def format_stp_parsed_info(parsed_stp_data: Dict[str, Dict[str, Any]]) -> str:
+    formatted_data = []
     for vlan, data in parsed_stp_data.items():
-        formatted_output.append(f"VLAN{vlan}")
+        formatted_data.append(f"\nVLAN{vlan}")
+        formatted_data.append(f"  vlan_id      {data['vlan_id']}")
+        formatted_data.append(f"  vlan_id_str  {data['vlan_id_str']}")
         if "protocol" in data:
-            formatted_output.append(f"  protocol     {data['protocol']}")
+            formatted_data.append(f"  protocol     {data['protocol']}")
         for id_type in ["root_id", "bridge_id"]:
             if data[id_type]:
-                formatted_output.append(f"  {id_type}")
+                formatted_data.append(f"  {id_type}")
                 for key, value in data[id_type].items():
                     if key == "counters":
-                        formatted_output.append("    counters")
+                        formatted_data.append("    counters")
                         for counter_key, counter_value in value.items():
-                            formatted_output.append(
+                            formatted_data.append(
                                 f"      {counter_key:<14} {counter_value}"
                             )
                     else:
-                        formatted_output.append(f"    {key:<14} {value}")
+                        formatted_data.append(f"    {key:<14} {value}")
 
-    formatted_output = "\n".join(formatted_output)
-    return formatted_output
+    formatted_data = "\n".join(formatted_data)
+    return formatted_data
 
 
-def main():
-    # texts = [input_text_1, input_text_2]
+def main() -> None:
     texts = [input_text_1]
     # texts = [input_text_2]
+    # texts = [input_text_1, input_text_2]
 
     parsed_stp_data_list = []
     for i, raw_text in enumerate(texts, start=1):
         print(f"Processing input_text_{i}:")
 
         parsed_stp_data = parse_stp_data_per_vlan(raw_text)
-        print("\nparsed_stp_data:\n\n", parsed_stp_data)
+        print("parsed_stp_data:\n\n", parsed_stp_data)
         parsed_stp_data_list.append(parsed_stp_data)
 
-        formatted_output = format_vlan_info(parsed_stp_data)
-        print("\nformatted_output:\n\n", formatted_output)
+        formatted_data = format_stp_parsed_info(parsed_stp_data)
+        print("\nformatted_data:\n", formatted_data)
 
         print("\n", 20 * "-", "\n")
 
     print(f"\nparsed_stp_data_list:\n\n{(parsed_stp_data_list)}")
 
-    vlans_found = []
-    for vlan_id in parsed_stp_data_list[0]:
-        # vlan_id = int(vlan_id)
-        vlans_found.append(vlan_id)
+    vlans_found = list(parsed_stp_data_list[0].keys())
     print(f"\nvlans_found: {vlans_found}")
-    print(f"\nNumber of VLANs found: {len(vlans_found)}")
+    print(f"\nNumber of VLANs found: {len(vlans_found)}\n")
+
+    print(20 * "*")
+    # Extraer información para cada VLAN encontrada
+    for vlan_id in vlans_found:
+        vlan_info = parsed_stp_data_list[0].get(vlan_id)
+        if vlan_info:
+            print(f"\nInformation for VLAN {vlan_id}:")
+            print(vlan_info)
+        else:
+            print(f"No information found for VLAN {vlan_id}")
+
+    print("\n")
 
 
 if __name__ == "__main__":
