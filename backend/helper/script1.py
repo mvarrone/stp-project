@@ -241,15 +241,15 @@ def main() -> None:
         print(f"Processing input_text_{i}:")
 
         parsed_stp_data = parse_stp_data_per_vlan(raw_text)
-        print("parsed_stp_data:\n\n", parsed_stp_data)
+        print("\nparsed_stp_data:\n\n", parsed_stp_data)
         parsed_stp_data_list.append(parsed_stp_data)
 
         formatted_data = format_stp_parsed_info(parsed_stp_data)
         print("\nformatted_data:\n", formatted_data)
 
-        print("\n", 20 * "-", "\n")
+        print(20 * "-")
 
-    print(f"\nparsed_stp_data_list:\n\n{(parsed_stp_data_list)}")
+    print(f"parsed_stp_data_list:\n\n{(parsed_stp_data_list)}")
 
     vlans_found = list(parsed_stp_data_list[0].keys())
     print(f"\nvlans_found: {vlans_found}")
@@ -264,8 +264,6 @@ def main() -> None:
             print(vlan_info)
         else:
             print(f"No information found for VLAN {vlan_id}")
-
-    print("\n")
 
 
 if __name__ == "__main__":
