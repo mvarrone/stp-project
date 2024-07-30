@@ -1,4 +1,5 @@
 import re
+import time
 from typing import Dict, Any
 
 input_text_1 = """
@@ -97,7 +98,43 @@ Gi1/0               Desg FWD 4         128.5    Shr
 Gi1/1               Desg FWD 4         128.6    Shr      
 Gi1/2               Desg FWD 4         128.7    Shr      
 Gi1/3               Desg FWD 4         128.8    Shr      
+
+VLAN0100
+Spanning tree enabled protocol rstp
+Root ID     Priority    32769
+            Address     5000.5800.0200
+            Cost        16
+            Port        5 (GigabitEthernet1/0)
+            Hello Time   2 sec  Max Age 20 sec  Forward Delay 15 sec
+
+Bridge ID   Priority    32769  (priority 32768 sys-id-ext 1)
+            Address     5042.7200.0d00
+            Hello Time   2 sec  Max Age 20 sec  Forward Delay 15 sec
+            Aging Time  300 sec
+
+Interface           Role Sts Cost      Prio.Nbr Type
+------------------- ---- --- --------- -------- --------------------------------
+Gi0/0               Desg FWD 4         128.1    Shr 
+Gi0/1               Desg FWD 4         128.2    Shr 
+Gi0/2               Desg FWD 4         128.3    Shr 
+Gi0/3               Desg FWD 4         128.4    Shr 
+Gi1/0               Root FWD 4         128.5    Shr 
+Gi1/1               Desg FWD 4         128.6    Shr 
+Gi1/2               Desg FWD 4         128.7    Shr 
+Gi1/3               Desg FWD 4         128.8    Shr
 """
+
+
+def print_execution_time(end_total: float) -> None:
+    # end_total = round(end_total, 2)
+
+    if end_total > 1:
+        unit = "s"
+        print(f"\nTotal script execution time: {end_total} {unit}")
+    else:
+        unit = "ms"
+        end_total *= 1000
+        print(f"\nTotal script execution time: {end_total:.2f} {unit}")
 
 
 def parse_stp_data_per_vlan(raw_text: str) -> Dict[str, Dict[str, Any]]:
@@ -232,4 +269,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    start_total = time.time()
     main()
+    end_total = time.time() - start_total
+    print_execution_time(end_total)
