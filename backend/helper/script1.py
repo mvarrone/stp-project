@@ -101,7 +101,7 @@ Gi1/3               Desg FWD 4         128.8    Shr
 
 
 def parse_stp_data_per_vlan(raw_text: str) -> Dict[str, Dict[str, Any]]:
-    vlan_info = {}
+    parsed_stp_data = {}
     current_vlan = None
     current_id = None
 
@@ -113,7 +113,7 @@ def parse_stp_data_per_vlan(raw_text: str) -> Dict[str, Dict[str, Any]]:
         vlan_match = re.match(r"VLAN(\d+)", line)
         if vlan_match:
             current_vlan = vlan_match.group(1)
-            vlan_info[current_vlan] = {
+            parsed_stp_data[current_vlan] = {
                 "vlan_id": int(current_vlan),
                 "vlan_id_str": current_vlan,
                 "protocol": "",
@@ -125,7 +125,7 @@ def parse_stp_data_per_vlan(raw_text: str) -> Dict[str, Dict[str, Any]]:
         if current_vlan:
             protocol_match = re.search(r"Spanning tree enabled protocol (\S+)", line)
             if protocol_match:
-                vlan_info[current_vlan]["protocol"] = protocol_match.group(1)
+                parsed_stp_data[current_vlan]["protocol"] = protocol_match.group(1)
                 continue
 
             if line.startswith("Root ID") or line.startswith("Bridge ID"):
@@ -133,26 +133,26 @@ def parse_stp_data_per_vlan(raw_text: str) -> Dict[str, Dict[str, Any]]:
                 priority_match = re.search(r"Priority\s+(\d+)", line)
                 if priority_match:
                     priority = int(priority_match.group(1))
-                    vlan_info[current_vlan][current_id]["priority"] = priority
+                    parsed_stp_data[current_vlan][current_id]["priority"] = priority
             elif line.startswith("Address"):
                 address_match = re.search(r"Address\s+([0-9a-fA-F.]+)", line)
                 if address_match:
-                    vlan_info[current_vlan][current_id]["address"] = (
+                    parsed_stp_data[current_vlan][current_id]["address"] = (
                         address_match.group(1)
                     )
             elif line.startswith("Cost"):
                 cost_match = re.search(r"Cost\s+(\d+)", line)
                 if cost_match:
                     cost = int(cost_match.group(1))
-                    vlan_info[current_vlan][current_id]["cost"] = cost
+                    parsed_stp_data[current_vlan][current_id]["cost"] = cost
             elif "This bridge is the root" in line:
-                vlan_info[current_vlan][current_id]["cost"] = 0
+                parsed_stp_data[current_vlan][current_id]["cost"] = 0
             elif "Hello Time" in line:
                 counters_match = re.search(
                     r"Hello Time\s+(\d+).*Max Age\s+(\d+).*Forward Delay\s+(\d+)", line
                 )
                 if counters_match:
-                    vlan_info[current_vlan][current_id]["counters"] = {
+                    parsed_stp_data[current_vlan][current_id]["counters"] = {
                         "hello_time": int(counters_match.group(1)),
                         "max_age": int(counters_match.group(2)),
                         "forward_delay": int(counters_match.group(3)),
@@ -160,13 +160,13 @@ def parse_stp_data_per_vlan(raw_text: str) -> Dict[str, Dict[str, Any]]:
             elif line.startswith("Aging Time"):
                 aging_time_match = re.search(r"Aging Time\s+(\d+)", line)
                 if aging_time_match and current_id == "bridge_id":
-                    if "counters" not in vlan_info[current_vlan][current_id]:
-                        vlan_info[current_vlan][current_id]["counters"] = {}
-                    vlan_info[current_vlan][current_id]["counters"]["aging_time"] = int(
-                        aging_time_match.group(1)
-                    )
+                    if "counters" not in parsed_stp_data[current_vlan][current_id]:
+                        parsed_stp_data[current_vlan][current_id]["counters"] = {}
+                    parsed_stp_data[current_vlan][current_id]["counters"][
+                        "aging_time"
+                    ] = int(aging_time_match.group(1))
 
-    return vlan_info
+    return parsed_stp_data
 
 
 def format_stp_parsed_info(parsed_stp_data: Dict[str, Dict[str, Any]]) -> str:
